@@ -1,37 +1,39 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
+	"crypto/tls"
 
 	"github.com/quic-go/quic-go"
 )
 
-const serverAddr = "140.112.20.183:1234" // Change to the desired server IP address
+const serverAddr = "0.0.0.0:1234" // Change to the desired server IP address
 
 func handleClient(session quic.Connection) {
-	// for {
-	// 	stream, err := session.AcceptStream()
-	// 	if err != nil {
-	// 		log.Println(err)
-	// 		return
-	// 	}
+	for {
+		stream, err := session.AcceptStream(session.Context())
+		if err != nil {
+			log.Println(err)
+			return
+		}
 
-	// 	go func(s quic.Stream) {
-	// 		defer s.Close()
+		go func(s quic.Stream) {
+			defer s.Close()
 
-	// 		buf := make([]byte, 1024)
-	// 		for {
-	// 			n, err := s.Read(buf)
-	// 			if err != nil {
-	// 				log.Println(err)
-	// 				return
-	// 			}
-	// 			fmt.Printf("Received: %s\n", buf[:n])
-	// 		}
-	// 	}(stream)
-	// }
+			buf := make([]byte, 1024)
+			for {
+				n, err := s.Read(buf)
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				fmt.Printf("Received: %s\n", buf[:n])
+			}
+		}(stream)
+	}
 }
 
 func main() {
@@ -45,6 +47,13 @@ func main() {
 	tr := quic.Transport{
 		Conn: udpConn,
 	}
+	tlsConf := &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"h3"},
+	}
+	quicConf := &quic.Config{
+		// KeepAlive: true,
+	}
 
 	quicListener, err := tr.Listen(tlsConf, quicConf)
 	if err != nil {
@@ -55,10 +64,11 @@ func main() {
 	fmt.Printf("Listening on %s...\n", serverAddr)
 
 	go func() {
+		fmt.Println("Listening on...")
 		for {
 			conn, err := quicListener.Accept(context.Background())
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				return
 			}
 
