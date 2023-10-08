@@ -35,9 +35,8 @@ func main() {
 func handleQuicStream(stream quic.Stream) {
 
 	// totalBytes := 0
-
+	idx := 0
 	for {
-		idx := 0
 		buf := make([]byte, bufferMaxSize)
 		size, err := stream.Read(buf)
 		if err != nil {
