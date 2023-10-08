@@ -2,77 +2,122 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
-	"net"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
+	"flag"
+	"fmt"
+	"math/big"
+	"strconv"
 
 	"github.com/quic-go/quic-go"
 )
 
-const serverAddr = "0.0.0.0:1234" // Change to the desired server IP address
+const bufferMaxSize = 1048576 // 1mb
 
-func handleClient(session quic.Connection) {
+// We start a server echoing data on the first stream the client opens,
+// then connect with a client, send the message, and wait for its receipt.
+func main() {
+	fmt.Println("Starting server...")
+
+	host := flag.String("host", "0.0.0.0", "Host to bind")
+	quicPort := flag.Int("quic", 4242, "QUIC port to listen")
+
+	flag.Parse()
+
+	go echoQuicServer(*host, *quicPort)
+
+	select {}
+}
+
+func handleQuicStream(stream quic.Stream) {
+
+	// totalBytes := 0
+
 	for {
-		stream, err := session.AcceptStream(session.Context())
+		idx := 0
+		buf := make([]byte, bufferMaxSize)
+		size, err := stream.Read(buf)
 		if err != nil {
-			log.Println(err)
+			//fmt.Printf("QUIC: Got '%d' bytes\n", totalBytes)
 			return
 		}
+		fmt.Printf("Received: %s\n", buf[:size])
 
-		go func(s quic.Stream) {
-			defer s.Close()
-
-			buf := make([]byte, 1024)
-			for {
-				n, err := s.Read(buf)
-				if err != nil {
-					log.Println(err)
-					return
-				}
-				fmt.Printf("Received: %s\n", buf[:n])
-			}
-		}(stream)
-	}
-}
-
-func main() {
-	// Listen for QUIC connections
-	udpConn, err := net.ListenUDP("udp4", &net.UDPAddr{Port: 1234})
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer udpConn.Close()
-
-	tr := quic.Transport{
-		Conn: udpConn,
-	}
-	tlsConf := &tls.Config{
-		InsecureSkipVerify: true,
-		NextProtos:         []string{"h3"},
-	}
-	quicConf := &quic.Config{
-		// KeepAlive: true,
-	}
-
-	quicListener, err := tr.Listen(tlsConf, quicConf)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer quicListener.Close()
-
-	fmt.Printf("Listening on %s...\n", serverAddr)
-
-	go func() {
-		fmt.Println("Listening on...")
-		for {
-			conn, err := quicListener.Accept(context.Background())
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-
-			go handleClient(conn)
+		// responseString := pad([]byte(fmt.Sprintf("%d", size)), 8)
+		responseString := "from server" + strconv.Itoa(idx)
+		responseMsg := []byte(responseString)
+		_, err = stream.Write(responseMsg)
+		if err != nil {
+			panic(err)
 		}
-	}()
+		idx += 1
+		// totalBytes += size
+	}
 }
+func handleQuicSession(sess quic.Connection) {
+	for {
+		stream, err := sess.AcceptStream(context.Background())
+		if err != nil {
+			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
+		}
+		go handleQuicStream(stream)
+	}
+}
+
+// Start a server that echos all data on top of QUIC
+func echoQuicServer(host string, quicPort int) error {
+	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(), nil)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Started QUIC server! %s:%d\n", host, quicPort)
+
+	for {
+		sess, err := listener.Accept(context.Background())
+		fmt.Printf("Accepted Connection! %s\n", sess.RemoteAddr())
+
+		if err != nil {
+			return err
+		}
+
+		go handleQuicSession(sess)
+	}
+}
+
+// Setup a bare-bones TLS config for the server
+func generateTLSConfig() *tls.Config {
+	key, err := rsa.GenerateKey(rand.Reader, 1024)
+	if err != nil {
+		panic(err)
+	}
+	template := x509.Certificate{SerialNumber: big.NewInt(1)}
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+	if err != nil {
+		panic(err)
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+
+	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
+	if err != nil {
+		panic(err)
+	}
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		NextProtos:   []string{"h3"},
+	}
+}
+
+// func pad(bb []byte, size int) []byte {
+// 	l := len(bb)
+// 	if l == size {
+// 		return bb
+// 	}
+// 	tmp := make([]byte, size)
+// 	copy(tmp[size-l:], bb)
+// 	return tmp
+// }

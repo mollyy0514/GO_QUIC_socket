@@ -12,6 +12,7 @@ import (
 )
 
 const serverAddr = "192.168.1.79:4242" // Change to the server's IP address
+const bufferMaxSize = 1048576 // 1mb
 
 func main() {
 	tlsConfig := &tls.Config{
@@ -35,7 +36,7 @@ func main() {
 	}
 	defer stream.Close()
 
-	ticker := time.NewTicker(50 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
 	idx := 0
@@ -46,7 +47,15 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("Sent: %s\n", message)
+		// fmt.Printf("Sent: %s\n", message)
 		idx += 1
+
+		responseBuf := make([]byte, bufferMaxSize)
+		size, err := stream.Read(responseBuf)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("Received: %s\n", responseBuf[:size])
 	}
 }
