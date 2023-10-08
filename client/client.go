@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/quic-go/quic-go"
 )
 
-const serverAddr = "140.112.20.183:1234" // Change to the server's IP address
+const serverAddr = "192.168.1.79:4242" // Change to the server's IP address
 
 func main() {
 	tlsConfig := &tls.Config{
@@ -23,7 +24,8 @@ func main() {
 
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		// log.Fatal(err)
 	}
 	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
 
@@ -36,12 +38,15 @@ func main() {
 	ticker := time.NewTicker(50 * time.Millisecond)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		message := []byte("Hello, server!")
+	idx := 0
+	for range ticker.C {	
+		str := "Hello, server " + strconv.Itoa(idx)
+		message := []byte(str)
 		_, err := stream.Write(message)
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Printf("Sent: %s\n", message)
+		idx += 1
 	}
 }
