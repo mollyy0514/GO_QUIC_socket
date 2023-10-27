@@ -7,10 +7,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	// "errors"
 	"flag"
 	"fmt"
+	"log"
 	"math/big"
+
+	// "os"
+	"os/exec"
 	"strconv"
+
+	// "time"
 
 	"github.com/quic-go/quic-go"
 )
@@ -27,6 +34,7 @@ func main() {
 
 	flag.Parse()
 
+	start_tcpdump()
 	go echoQuicServer(*host, *quicPort)
 
 	select {}
@@ -120,3 +128,12 @@ func generateTLSConfig() *tls.Config {
 // 	copy(tmp[size-l:], bb)
 // 	return tmp
 // }
+
+func start_tcpdump() {
+	// Run tcpdump with parameters
+	cmd := exec.Command("tcpdump", "port", "4242", "-w", "capture.pcap")
+	if err := cmd.Start(); err != nil {
+		print("this is tcpdump starting error\n")
+		log.Fatal(err)
+	}
+}
