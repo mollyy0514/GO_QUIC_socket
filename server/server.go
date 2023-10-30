@@ -7,6 +7,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"os"
+	"time"
+
 	// "errors"
 	"flag"
 	"fmt"
@@ -76,7 +79,10 @@ func handleQuicSession(sess quic.Connection) {
 
 // Start a server that echos all data on top of QUIC
 func echoQuicServer(host string, quicPort int) error {
-	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(), nil)
+	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(), &quic.Config{
+		KeepAlivePeriod: time.Minute * 5,
+		EnableDatagrams: true,
+	})
 	if err != nil {
 		return err
 	}
@@ -109,6 +115,8 @@ func generateTLSConfig() *tls.Config {
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
+	kl, _ := os.OpenFile("tls_key.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		panic(err)
@@ -116,6 +124,7 @@ func generateTLSConfig() *tls.Config {
 	return &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 		NextProtos:   []string{"h3"},
+		KeyLogWriter: kl,
 	}
 }
 
@@ -131,7 +140,8 @@ func generateTLSConfig() *tls.Config {
 
 func start_tcpdump() {
 	// Run tcpdump with parameters
-	cmd := exec.Command("tcpdump", "port", "4242", "-w", "capture.pcap")
+	// cmd := exec.Command("sudo tcpdump", "port", "4242", "-w", "capture.pcap")
+	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w capture.pcap")
 	if err := cmd.Start(); err != nil {
 		print("this is tcpdump starting error\n")
 		log.Fatal(err)
