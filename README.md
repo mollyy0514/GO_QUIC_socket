@@ -2,3 +2,32 @@
 1. Just import the package in your code
 2. run `$ go mod init <filename>`, it will then create a go.mod file
 3. run `$ go mod tidy`, this command checks the imports used in your program and fetches the module if not fetched already.
+
+
+## TODO
+**1031**:
+- Datagram packet or Stream packet
+- Send packets under TCP protocol for 5 minutes
+
+## Descrption
+I use datagram packet rather than stream packet here, since the order is less important than timely delivery 
+
+Comparison:
+- Stream Socket:
+    - Dedicated & end-to-end channel between server and client.
+    - Use TCP protocol for data transmission.
+    - Reliable and Lossless.
+    - Data sent/received in the similar order.
+    - Long time for recovering lost/mistaken data
+
+- Datagram Socket:
+    - Not dedicated & end-to-end channel between server and client.
+    - Use UDP for data transmission.
+    - Not 100% reliable and may lose data.
+    - Data sent/received order might not be the same.
+    - Don't care or rapid recovering lost/mistaken data.
+
+
+
+## References
+[使用Wireshark抓取quic-go產生的QUIC封包](https://hackmd.io/@pjkXMg3PTpu1Habe8pG_Lg/H103K8smn?utm_source=preview-mode&utm_medium=rec)
