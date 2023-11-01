@@ -1,3 +1,7 @@
+## How to clone a private repository?
+`$ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git`
+[Clone A Private Repository (Github)](https://stackoverflow.com/questions/2505096/clone-a-private-repository-github)
+
 ## How to import third party package?
 1. Just import the package in your code
 2. run `$ go mod init <filename>`, it will then create a go.mod file
