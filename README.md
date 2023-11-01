@@ -6,11 +6,14 @@
 
 ## TODO
 **1031**:
-- Datagram packet or Stream packet
+- Datagram packet or Stream packet -> Stream packet
 - Send packets under TCP protocol for 5 minutes
 
+**1101**:
+- Add time_sync
+- Calculate latency
+
 ## Descrption
-I use datagram packet rather than stream packet here, since the order is less important than timely delivery 
 
 Comparison:
 - Stream Socket:
