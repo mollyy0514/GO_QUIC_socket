@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/binary"
 	"fmt"
 	"log"
+
 	// "strconv"
 	"time"
 
@@ -44,9 +47,34 @@ func main() {
 
 	// idx := 0
 	start_time := time.Now()
-	for (time.Since(start_time) <= time.Duration(duration)){
-		str := "Hello, server "+ time.Since(start_time).String()
-		message := []byte(str)
+	euler := 271828
+	pi := 31415926
+	packet_length := 250
+	for time.Since(start_time) <= time.Duration(duration) {
+		// str := "Hello, server "+ time.Since(start_time).String()
+		// message := []byte(str)
+		t := time.Now().UnixNano() / 1000000 // Time in milliseconds
+
+		datetimeDec := uint32(t / 1000) // Extract seconds from milliseconds
+		microsec := uint32(t % 1000)    // Extract remaining microseconds
+
+		var message []byte
+		message = append(message, make([]byte, 4)...)
+		binary.BigEndian.PutUint32(message[:4], uint32(euler))
+		message = append(message, make([]byte, 4)...)
+		binary.BigEndian.PutUint32(message[4:8], uint32(pi))
+		message = append(message, make([]byte, 4)...)
+		binary.BigEndian.PutUint32(message[8:12], datetimeDec)
+		message = append(message, make([]byte, 4)...)
+		binary.BigEndian.PutUint32(message[12:16], microsec)
+
+		msgLength := len(message)
+		if msgLength < packet_length {
+			randomBytes := make([]byte, packet_length-msgLength)
+			rand.Read(randomBytes)
+			message = append(message, randomBytes...)
+		}
+
 		_, err := stream.Write(message)
 		// err := session.SendMessage(message)
 		if err != nil {
@@ -66,12 +94,12 @@ func main() {
 	// 	// fmt.Printf("Sent: %s\n", message)
 	// 	idx += 1
 
-		// responseBuf := make([]byte, bufferMaxSize)
-		// size, err := stream.Read(responseBuf)
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		// fmt.Printf("Received: %s\n", responseBuf[:size])
+	// responseBuf := make([]byte, bufferMaxSize)
+	// size, err := stream.Read(responseBuf)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Printf("Received: %s\n", responseBuf[:size])
 	// }
 }

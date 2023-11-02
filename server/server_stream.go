@@ -6,8 +6,10 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/binary"
 	"encoding/pem"
 	"os"
+
 	// "text/template"
 	"time"
 
@@ -26,7 +28,8 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-const bufferMaxSize = 1048576 // 1mb
+// const bufferMaxSize = 1048576 // 1mb
+const packet_length = 250
 
 // We start a server echoing data on the first stream the client opens,
 // then connect with a client, send the message, and wait for its receipt.
@@ -48,12 +51,17 @@ func handleQuicStream(stream quic.Stream) {
 
 	idx := 0
 	for {
-		buf := make([]byte, bufferMaxSize)
-		size, err := stream.Read(buf)
+		buf := make([]byte, packet_length)
+		_, err := stream.Read(buf)
+		tsSeconds := binary.BigEndian.Uint32(buf[16:20])
+		tsMicroseconds := binary.BigEndian.Uint32(buf[20:24])
+
+		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e6
+		// fmt.Println(ts)
 		if err != nil {
 			return
 		}
-		fmt.Printf("Received: %s\n", buf[:size])
+		fmt.Printf("Received: %f\n", ts)
 
 		// responseString := "from server" + strconv.Itoa(idx)
 		// responseMsg := []byte(responseString)
@@ -102,10 +110,10 @@ func echoQuicServer(host string, quicPort int) error {
 // Setup a bare-bones TLS config for the server
 func generateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
-	template := x509.Certificate{SerialNumber:big.NewInt(1)}
+	template := x509.Certificate{SerialNumber: big.NewInt(1)}
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
 	if err != nil {
 		panic(err)
