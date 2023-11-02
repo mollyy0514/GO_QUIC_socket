@@ -1,9 +1,8 @@
-import ntplib
 import time
 import sys
 import socket
 import datetime as dt
-from myutils import makedir
+
 
 HOST = '192.168.1.78'
 PORT = 3298
@@ -17,9 +16,6 @@ if sys.argv[1] == '-c':
     now = dt.datetime.today()
     date = [str(x) for x in [now.year, now.month, now.day]]
     date = [x.zfill(2) for x in date]
-    date = '-'.join(date)
-    dirpath = f'./log/{date}'
-    makedir(dirpath)
 
     server_addr = (HOST, PORT)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

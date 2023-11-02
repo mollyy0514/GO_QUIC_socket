@@ -16,6 +16,8 @@ import (
 
 const serverAddr = "192.168.1.78:4242" // Change to the server's IP address
 // const bufferMaxSize = 1048576          // 1mb
+const PACKET_LEN = 250
+const SERVER_TIME_SYNC = "syncing from server"
 
 func main() {
 	tlsConfig := &tls.Config{
@@ -49,7 +51,7 @@ func main() {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	packet_length := 250
+
 	for time.Since(start_time) <= time.Duration(duration) {
 		// str := "Hello, server "+ time.Since(start_time).String()
 		// message := []byte(str)
@@ -69,8 +71,8 @@ func main() {
 		binary.BigEndian.PutUint32(message[12:16], microsec)
 
 		msgLength := len(message)
-		if msgLength < packet_length {
-			randomBytes := make([]byte, packet_length-msgLength)
+		if msgLength < PACKET_LEN {
+			randomBytes := make([]byte, PACKET_LEN-msgLength)
 			rand.Read(randomBytes)
 			message = append(message, randomBytes...)
 		}

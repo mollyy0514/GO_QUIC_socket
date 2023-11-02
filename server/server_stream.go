@@ -30,6 +30,7 @@ import (
 
 // const bufferMaxSize = 1048576 // 1mb
 const packet_length = 250
+const SERVER_TIME_SYNC = "syncing from server"
 
 // We start a server echoing data on the first stream the client opens,
 // then connect with a client, send the message, and wait for its receipt.
@@ -63,12 +64,13 @@ func handleQuicStream(stream quic.Stream) {
 		}
 		fmt.Printf("Received: %f\n", ts)
 
-		// responseString := "from server" + strconv.Itoa(idx)
-		// responseMsg := []byte(responseString)
-		// _, err = stream.Write(responseMsg)
-		// if err != nil {
-		// 	panic(err)
-		// }
+		// Sending this message to Calaculate RTT
+		responseString := SERVER_TIME_SYNC
+		responseMsg := []byte(responseString)
+		_, err = stream.Write(responseMsg)
+		if err != nil {
+			panic(err)
+		}
 		idx += 1
 	}
 }
