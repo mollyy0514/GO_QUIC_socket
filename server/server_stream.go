@@ -61,11 +61,12 @@ func handleQuicStream(stream quic.Stream) {
 	defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
+		print("HI")
 		_, err := stream.Read(buf)
+		print("22")
 		tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 		tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
-
-		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e6
+		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
 		// fmt.Println(ts)
 		if err != nil {
 			return
