@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/json"
 	"encoding/pem"
 	"os"
 
@@ -51,11 +52,18 @@ func main() {
 func handleQuicStream(stream quic.Stream) {
 
 	idx := 0
+	// Open or create a file to store the floats in JSON format
+	timeFile, err := os.OpenFile("floats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
 		_, err := stream.Read(buf)
-		tsSeconds := binary.BigEndian.Uint32(buf[16:20])
-		tsMicroseconds := binary.BigEndian.Uint32(buf[20:24])
+		tsSeconds := binary.BigEndian.Uint64(buf[16:20])
+		tsMicroseconds := binary.BigEndian.Uint64(buf[20:24])
 
 		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e6
 		// fmt.Println(ts)
@@ -63,6 +71,13 @@ func handleQuicStream(stream quic.Stream) {
 			return
 		}
 		fmt.Printf("Received: %f\n", ts)
+
+		// Marshal the float to JSON and append it to the file
+		encoder := json.NewEncoder(timeFile)
+		if err := encoder.Encode(ts); err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return
+		}
 
 		// Sending this message to Calaculate RTT
 		// if (idx == 0) {
