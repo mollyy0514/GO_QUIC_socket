@@ -65,12 +65,14 @@ func handleQuicStream(stream quic.Stream) {
 		fmt.Printf("Received: %f\n", ts)
 
 		// Sending this message to Calaculate RTT
-		responseString := SERVER_TIME_SYNC
-		responseMsg := []byte(responseString)
-		_, err = stream.Write(responseMsg)
-		if err != nil {
-			panic(err)
-		}
+		// if (idx == 0) {
+		// 	responseString := SERVER_TIME_SYNC
+		// 	responseMsg := []byte(responseString)
+		// 	_, err = stream.Write(responseMsg)
+		// 	if err != nil {
+		// 		panic(err)
+		// 	}
+		// }
 		idx += 1
 	}
 }

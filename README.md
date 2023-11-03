@@ -17,6 +17,12 @@
 - Add time_sync
 - Calculate latency
 
+**1102**:
+- So it turns out that i just need to calculate RTT, since TCP sends `ACK` for every packet, and in *The First 5G-LTE Comparative Study in Extreme Mobility*, It also compared the RTT between two protocols.
+    - TCP: use `ACK Epoch time` minus the time that is send from client to server
+    - QUIC: use `ACK Epoch time` minus the time that is send from client to server
+    - 
+
 ## Descrption
 
 Comparison:
