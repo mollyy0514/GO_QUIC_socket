@@ -57,19 +57,20 @@ func main() {
 		// message := []byte(str)
 		t := time.Now().UnixNano() / 1000000 // Time in milliseconds
 
-		datetimeDec := uint64(t / 1000) // Extract seconds from milliseconds
-		microsec := uint64(t % 1000)    // Extract remaining microseconds
+		datetimeDec := uint32(t / 1000) // Extract seconds from milliseconds
+		microsec := uint32(t % 1000)    // Extract remaining microseconds
 
 		var message []byte
 		message = append(message, make([]byte, 4)...)
-		binary.BigEndian.PutUint64(message[:4], uint64(euler))
+		binary.BigEndian.PutUint32(message[:4], uint32(euler))
 		message = append(message, make([]byte, 4)...)
-		binary.BigEndian.PutUint64(message[4:8], uint64(pi))
+		binary.BigEndian.PutUint32(message[4:8], uint32(pi))
 		message = append(message, make([]byte, 4)...)
-		binary.BigEndian.PutUint64(message[8:12], datetimeDec)
+		binary.BigEndian.PutUint32(message[8:12], datetimeDec)
 		message = append(message, make([]byte, 4)...)
-		binary.BigEndian.PutUint64(message[12:16], microsec)
+		binary.BigEndian.PutUint32(message[12:16], microsec)
 
+		// add random additinal data to 250 bytes
 		msgLength := len(message)
 		if msgLength < PACKET_LEN {
 			randomBytes := make([]byte, PACKET_LEN-msgLength)
