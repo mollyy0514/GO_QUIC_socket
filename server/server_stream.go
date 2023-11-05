@@ -53,7 +53,7 @@ func handleQuicStream(stream quic.Stream) {
 
 	idx := 0
 	// Open or create a file to store the floats in JSON format
-	timeFile, err := os.OpenFile("floats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	timeFile, err := os.OpenFile("./data/floats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -165,7 +165,7 @@ func generateTLSConfig() *tls.Config {
 // }
 
 func start_tcpdump() {
-	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w capturequic.pcap")
+	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w ./data/capturequic_s.pcap")
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)
