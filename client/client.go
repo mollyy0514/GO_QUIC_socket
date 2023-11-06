@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"os/exec"
-	// "crypto/rand"
+	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
@@ -21,6 +21,7 @@ const PACKET_LEN = 250
 const SERVER_TIME_SYNC = "syncing from server"
 
 func main() {
+	// set TLS
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		NextProtos:         []string{"h3"},
@@ -29,16 +30,19 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
 	defer cancel()
 
-	// calture packets in client side
+	// capture packets in client side
 	start_tcpdump()
 	
+	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
 	if err != nil {
 		fmt.Println(err)
 		// log.Fatal(err)
 	}
 	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
-
+	
+	// create a stream
+	// context.Background() is similar to a channel, giving QUIC a way to communicate
 	stream, err := session.OpenStreamSync(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -76,12 +80,12 @@ func main() {
 		binary.BigEndian.PutUint32(message[12:16], microsec)
 
 		// add random additinal data to 250 bytes
-		// msgLength := len(message)
-		// if msgLength < PACKET_LEN {
-		// 	randomBytes := make([]byte, PACKET_LEN-msgLength)
-		// 	rand.Read(randomBytes)
-		// 	message = append(message, randomBytes...)
-		// }
+		msgLength := len(message)
+		if msgLength < PACKET_LEN {
+			randomBytes := make([]byte, PACKET_LEN-msgLength)
+			rand.Read(randomBytes)
+			message = append(message, randomBytes...)
+		}
 
 		_, err = stream.Write(message)
 		if err != nil {

@@ -95,6 +95,7 @@ func handleQuicStream(stream quic.Stream) {
 
 func handleQuicSession(sess quic.Connection) {
 	for {
+		// create a stream to receive message, and also create a channel for communication
 		stream, err := sess.AcceptStream(context.Background())
 		if err != nil {
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
@@ -116,6 +117,7 @@ func echoQuicServer(host string, quicPort int) error {
 	fmt.Printf("Started QUIC server! %s:%d\n", host, quicPort)
 
 	for {
+		// create a session
 		sess, err := listener.Accept(context.Background())
 		fmt.Printf("Accepted Connection! %s\n", sess.RemoteAddr())
 
