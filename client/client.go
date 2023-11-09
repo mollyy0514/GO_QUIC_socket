@@ -53,13 +53,13 @@ func main() {
 	defer ticker.Stop()
 
 	// Duration to run the sending process
-	// duration := 1 * time.Minute
+	duration := 1 * time.Minute
 	idx := 0
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	// for time.Since(start_time) <= time.Duration(duration) {
-	for time.Since(start_time) < 600*time.Millisecond {
+	for time.Since(start_time) <= time.Duration(duration) {
+	// for time.Since(start_time) < 600*time.Millisecond {
 		// str := "Hello, server "+ time.Since(start_time).String()
 		// message := []byte(str)
 		t := time.Now().UnixNano() // Time in milliseconds
