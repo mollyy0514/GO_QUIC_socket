@@ -11,9 +11,16 @@ def pcap_to_csv(infilepath, outfilepath):
     #     f"-e tcp.analysis.out_of_order -E header=y -E separator=@ >{outfilepath}"
     
     # UDP
+    # s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e frame.len \
+    #     -e sll.pkttype -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
+    #     -e udp.length -e udp.srcport -e udp.dstport -e data.len -e udp.payload -e _ws.col.Info \
+    #     -E header=y -E separator=@ > {outfilepath}"
+    
+    # QUIC
     s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e frame.len \
-        -e sll.pkttype -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
+        -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
         -e udp.length -e udp.srcport -e udp.dstport -e data.len -e udp.payload -e _ws.col.Info \
+        -e quic.ack.largest_acknowledged -e quic.ack.ack_delay \
         -E header=y -E separator=@ > {outfilepath}"
     
     print(s)
@@ -23,7 +30,6 @@ def pcap_to_csv(infilepath, outfilepath):
 if os.path.isdir(sys.argv[1]):
 
     dirname = sys.argv[1]
-
     filenames = os.listdir(dirname)
 
     for fname in sorted(filenames):
@@ -34,7 +40,7 @@ if os.path.isdir(sys.argv[1]):
 
 elif sys.argv[1].endswith(".pcap"):
 
-    fname = sys.argv[1]
+    fname = "./data/"+sys.argv[1]
     pcap_to_csv(fname, os.path.join(fname[:fname.find(".pcap")]+"_pcap.csv"))
 
 else:

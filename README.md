@@ -31,6 +31,16 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
     - Does QUIC need to receive ACK and then it can send the next packet?
 - Calculate TCP RTT
 
+**11109**:
+- Establish a new connection with server & client to make sure that both computers have got the latest tls key file
+- TCP RTT:
+    - https://www.freekb.net/Article?id=945
+    - https://www.youtube.com/watch?v=Y5y85Lc7vOk&ab_channel=LauraChappell
+- QUIC RTT:
+    - (Rcv time - Send time) vs. Time since the ACKed packets
+    - Adjust by ack_delay vs. No need to adjust since it's already the time delta
+
+
 ## Descrption
 
 Comparison:

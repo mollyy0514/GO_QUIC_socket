@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"os/exec"
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"log"
-
-	// "strconv"
 	"time"
-
+	// "os/exec"
+	// "strings"
+	// "strconv"
+	// "GO_QUIC_socket/rtt_stats"
 	"github.com/quic-go/quic-go"
 )
 
@@ -31,8 +31,8 @@ func main() {
 	defer cancel()
 
 	// capture packets in client side
-	start_tcpdump()
-	
+	// start_tcpdump()
+	time.Sleep(1 * time.Second)
 	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
 	if err != nil {
@@ -40,7 +40,7 @@ func main() {
 		// log.Fatal(err)
 	}
 	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
-	
+
 	// create a stream
 	// context.Background() is similar to a channel, giving QUIC a way to communicate
 	stream, err := session.OpenStreamSync(context.Background())
@@ -54,12 +54,10 @@ func main() {
 
 	// Duration to run the sending process
 	// duration := 1 * time.Minute
-
 	idx := 0
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-
 	// for time.Since(start_time) <= time.Duration(duration) {
 	for time.Since(start_time) < 600*time.Millisecond {
 		// str := "Hello, server "+ time.Since(start_time).String()
@@ -106,10 +104,10 @@ func main() {
 	// }
 }
 
-func start_tcpdump() {
-	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w ./data/capturequic_c.pcap")
-	err := cmd.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+// func start_tcpdump() {
+// 	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w ./data/capturequic_c.pcap")
+// 	err := cmd.Start()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
