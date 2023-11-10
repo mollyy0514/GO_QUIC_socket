@@ -17,9 +17,9 @@ def pcap_to_csv(infilepath, outfilepath):
     #     -E header=y -E separator=@ > {outfilepath}"
     
     # QUIC
-    s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e frame.len \
-        -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
-        -e udp.length -e udp.srcport -e udp.dstport -e data.len -e udp.payload -e _ws.col.Info \
+    s = f"tshark -r {infilepath} -T fields -e frame.number -e quic.packet_number -e frame.time -e frame.time_epoch -e frame.len \
+         -e quic.frame_type -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
+        -e udp.length -e udp.srcport -e udp.dstport -e udp.payload -e _ws.col.Info \
         -e quic.ack.largest_acknowledged -e quic.ack.ack_delay \
         -E header=y -E separator=@ > {outfilepath}"
     
