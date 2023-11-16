@@ -31,15 +31,16 @@ import (
 
 // const bufferMaxSize = 1048576 // 1mb
 const packet_length = 250
-const SERVER_TIME_SYNC = "syncing from server"
+const SERVER = "0.0.0.0"
+const PORT = 4242
 
 // We start a server echoing data on the first stream the client opens,
 // then connect with a client, send the message, and wait for its receipt.
 func main() {
 	fmt.Println("Starting server...")
 
-	host := flag.String("host", "0.0.0.0", "Host to bind")
-	quicPort := flag.Int("quic", 4242, "QUIC port to listen")
+	host := flag.String("host", SERVER, "Host to bind")
+	quicPort := flag.Int("quic", PORT, "QUIC port to listen")
 
 	flag.Parse()
 
@@ -61,9 +62,7 @@ func handleQuicStream(stream quic.Stream) {
 	defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
-		print("HI")
 		_, err := stream.Read(buf)
-		print("22")
 		tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 		tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
 		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
@@ -167,7 +166,13 @@ func generateTLSConfig() *tls.Config {
 // }
 
 func start_tcpdump() {
-	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w ./data/capturequic_s.pcap")
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	filepath := fmt.Sprintf("./data/capturequic_s_%d%d%d.pcap", y, m, d)
+	command := fmt.Sprintf("sudo tcpdump port %d -w %s", PORT, filepath)
+	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)

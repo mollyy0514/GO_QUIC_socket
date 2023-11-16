@@ -7,18 +7,22 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"os/exec"
 	"time"
-	// "os/exec"
+
 	// "strings"
 	// "strconv"
 	// "GO_QUIC_socket/rtt_stats"
 	"github.com/quic-go/quic-go"
 )
 
-const serverAddr = "192.168.1.78:4242" // Change to the server's IP address
+// const serverAddr = "192.168.1.78:4242" // Change to the server's IP address
+const SERVER = "0.0.0.0"
+const PORT = 4242
+var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
+
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
-const SERVER_TIME_SYNC = "syncing from server"
 
 func main() {
 	// set TLS
@@ -31,8 +35,8 @@ func main() {
 	defer cancel()
 
 	// capture packets in client side
-	// start_tcpdump()
-	time.Sleep(1 * time.Second)
+	start_tcpdump()
+
 	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
 	if err != nil {
@@ -77,7 +81,7 @@ func main() {
 		message = append(message, make([]byte, 4)...)
 		binary.BigEndian.PutUint32(message[12:16], microsec)
 
-		// add random additinal data to 250 bytes
+		// add random additional data to 250 bytes
 		msgLength := len(message)
 		if msgLength < PACKET_LEN {
 			randomBytes := make([]byte, PACKET_LEN-msgLength)
@@ -92,7 +96,7 @@ func main() {
 		time.Sleep(500 * time.Millisecond)
 		idx++
 	}
-	// print("times up")
+	print("times up")
 
 	// responseBuf := make([]byte, bufferMaxSize)
 	// size, err := stream.Read(responseBuf)
@@ -104,10 +108,16 @@ func main() {
 	// }
 }
 
-// func start_tcpdump() {
-// 	cmd := exec.Command("sh", "-c", "sudo tcpdump port 4242 -w ./data/capturequic_c.pcap")
-// 	err := cmd.Start()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
+func start_tcpdump() {
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	filepath := fmt.Sprintf("./data/capturequic_c_%d_%d_%d.pcap", y, m, d)
+	command := fmt.Sprintf("sudo tcpdump port %d -w %s", PORT, filepath)
+	cmd := exec.Command("sh", "-c", command)
+	err := cmd.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+}

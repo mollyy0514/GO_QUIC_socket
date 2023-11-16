@@ -40,6 +40,11 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
     - (Rcv time - Send time) vs. Time since the ACKed packets
     - Adjust by ack_delay vs. No need to adjust since it's already the time delta
 
+**1114**:
+- Add tcpdump instructions in TCP & QUIC socket code.
+- Design and observe packet loss situation.
+- How to make throughput comparison?
+- How to do congestion window(cwnd) camparison?
 
 ## Descrption
 
