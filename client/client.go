@@ -7,7 +7,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	// "strings"
 	"time"
 
 	// "strings"
@@ -17,14 +19,27 @@ import (
 )
 
 // const serverAddr = "192.168.1.78:4242" // Change to the server's IP address
-const SERVER = "0.0.0.0"
+const SERVER = "192.168.1.78"
 const PORT = 4242
+
 var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
 
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
 
 func main() {
+	// set the password for sudo
+	// Retrieve command-line arguments
+	args := os.Args
+	// Access the argument at index 1 (index 0 is the program name)
+	password := args[1]
+	// password := ""
+	// fmt.Print("Enter password: ")
+	// _, err := fmt.Scanln(&password)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
 	// set TLS
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -35,7 +50,8 @@ func main() {
 	defer cancel()
 
 	// capture packets in client side
-	start_tcpdump()
+	flag := false
+	subProcess, flag := start_tcpdump(password)
 
 	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
@@ -62,8 +78,8 @@ func main() {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	for time.Since(start_time) <= time.Duration(duration) {
-	// for time.Since(start_time) < 600*time.Millisecond {
+	for time.Since(start_time) <= time.Duration(duration) && flag {
+		// for time.Since(start_time) < 600*time.Millisecond {
 		// str := "Hello, server "+ time.Since(start_time).String()
 		// message := []byte(str)
 		t := time.Now().UnixNano() // Time in milliseconds
@@ -97,6 +113,7 @@ func main() {
 		idx++
 	}
 	print("times up")
+	close_tcpdump(subProcess)
 
 	// responseBuf := make([]byte, bufferMaxSize)
 	// size, err := stream.Read(responseBuf)
@@ -108,16 +125,26 @@ func main() {
 	// }
 }
 
-func start_tcpdump() {
+func start_tcpdump(password string) (*exec.Cmd, bool) {
+	// flag := false
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("./data/capturequic_c_%d_%d_%d.pcap", y, m, d)
-	command := fmt.Sprintf("sudo tcpdump port %d -w %s", PORT, filepath)
-	cmd := exec.Command("sh", "-c", command)
-	err := cmd.Start()
+	filepath := fmt.Sprintf("./data/capturequic_c_%d%d%d.pcap", y, m, d)
+	command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, PORT, filepath)
+	subProcess := exec.Command("sh", "-c", command)
+
+	// subProcess.Stdin = strings.NewReader(password)
+
+	err := subProcess.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return subProcess, true
+}
+
+func close_tcpdump(cmd *exec.Cmd) {
+	cmd.Process.Signal(os.Interrupt)
 }
