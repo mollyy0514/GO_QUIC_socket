@@ -45,6 +45,7 @@ func main() {
 	flag.Parse()
 
 	start_tcpdump()
+
 	go echoQuicServer(*host, *quicPort)
 
 	select {}
@@ -54,7 +55,7 @@ func handleQuicStream(stream quic.Stream) {
 
 	idx := 0
 	// Open or create a file to store the floats in JSON format
-	timeFile, err := os.OpenFile("./data/floats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	timeFile, err := os.OpenFile("./data/timefloats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -170,7 +171,8 @@ func start_tcpdump() {
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("./data/capturequic_s_%d%d%d.pcap", y, m, d)
+	date := fmt.Sprintf("%d%d%d", y, m, d)
+	filepath := fmt.Sprintf("./data/capturequic_s_%s.pcap", date)
 	command := fmt.Sprintf("sudo tcpdump port %d -w %s", PORT, filepath)
 	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Start()
