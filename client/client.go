@@ -35,12 +35,6 @@ func main() {
 	args := os.Args
 	// Access the argument at index 1 (index 0 is the program name)
 	password := args[1]
-	// password := ""
-	// fmt.Print("Enter password: ")
-	// _, err := fmt.Scanln(&password)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	// set TLS
 	tlsConfig := &tls.Config{
@@ -71,11 +65,11 @@ func main() {
 	}
 	defer stream.Close()
 
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
+	// ticker := time.NewTicker(500 * time.Millisecond)
+	// defer ticker.Stop()
 
 	// Duration to run the sending process
-	duration := 1 * time.Minute
+	duration := 30 * time.Second
 	idx := 0
 	start_time := time.Now()
 	euler := 271828

@@ -47,7 +47,10 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 - How to do congestion window(cwnd) camparison?
 
 **1117**:
-- Modulize socket code, so that it can automatically organize the experiment result. Especially tls_key.log for QUIC need to be stored in order to check previous experiment data in Wireshark
+- Modulize socket code, so that it can automatically organize the experiment result. Especially tls_key.log for QUIC need to be stored in order to check previous experiment data in Wireshark.
+
+**1120**:
+- implement qlog & qvis
 
 ## Descrption
 
