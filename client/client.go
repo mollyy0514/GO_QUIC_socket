@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	// "strings"
 	"time"
 
@@ -18,7 +20,7 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-// const serverAddr = "192.168.1.78:4242" // Change to the server's IP address
+// const SERVER = "127.0.0.1"
 const SERVER = "192.168.1.78"
 const PORT = 4242
 
@@ -146,5 +148,7 @@ func start_tcpdump(password string) (*exec.Cmd, bool) {
 }
 
 func close_tcpdump(cmd *exec.Cmd) {
-	cmd.Process.Signal(os.Interrupt)
+	quit := make(chan os.Signal, 1)
+    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+    <-quit
 }
