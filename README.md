@@ -52,6 +52,9 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 **1120**:
 - implement qlog & qvis
 
+**1122**:
+- connect to devices and assign ports
+
 ## Descrption
 
 Comparison:

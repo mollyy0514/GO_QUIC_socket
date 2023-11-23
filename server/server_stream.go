@@ -10,22 +10,14 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"os"
-
-	// "text/template"
 	"time"
-
 	// "errors"
 	"flag"
 	"fmt"
 	"log"
 	"math/big"
-
-	// "os"
 	"os/exec"
 	// "strconv"
-
-	// "time"
-
 	"github.com/quic-go/quic-go"
 )
 
@@ -41,7 +33,6 @@ func main() {
 
 	host := flag.String("host", SERVER, "Host to bind")
 	quicPort := flag.Int("quic", PORT, "QUIC port to listen")
-
 	flag.Parse()
 
 	start_tcpdump()
@@ -53,7 +44,7 @@ func main() {
 
 func handleQuicStream(stream quic.Stream) {
 
-	idx := 0
+	seq := 0
 	// Open or create a file to store the floats in JSON format
 	timeFile, err := os.OpenFile("./data/timefloats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -63,14 +54,7 @@ func handleQuicStream(stream quic.Stream) {
 	defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
-		_, err := stream.Read(buf)
-		tsSeconds := binary.BigEndian.Uint32(buf[8:12])
-		tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
-		ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
-		// fmt.Println(ts)
-		if err != nil {
-			return
-		}
+		ts := receive(stream, buf)
 		fmt.Printf("Received: %f\n", ts)
 
 		// Marshal the float to JSON and append it to the file
@@ -80,16 +64,12 @@ func handleQuicStream(stream quic.Stream) {
 			return
 		}
 
-		// Sending this message to Calaculate RTT
-		// if (idx == 0) {
-		// 	responseString := SERVER_TIME_SYNC
-		// 	responseMsg := []byte(responseString)
-		// 	_, err = stream.Write(responseMsg)
-		// 	if err != nil {
-		// 		panic(err)
-		// 	}
-		// }
-		idx += 1
+		// sending response to client
+		// responseString := "server received!"
+		// responseMsg := []byte(responseString)
+		// response(stream, responseMsg)
+		
+		seq += 1
 	}
 }
 
@@ -180,3 +160,23 @@ func start_tcpdump() {
 		log.Fatal(err)
 	}
 }
+
+func receive(stream quic.Stream, buf []byte) float64 {
+	_, err := stream.Read(buf)
+	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
+	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
+	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return ts
+}
+
+// func response(stream quic.Stream, responseMsg []byte) {
+	// 	_, err := stream.Write(responseMsg)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+// }
