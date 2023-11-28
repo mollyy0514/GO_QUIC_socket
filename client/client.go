@@ -1,4 +1,4 @@
-package main
+package client
 
 import (
 	"context"
@@ -29,7 +29,7 @@ var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
 
-func main() {
+func client() {
 	// set the password for sudo
 	// Retrieve command-line arguments
 	args := os.Args

@@ -1,4 +1,4 @@
-package devices
+package client_phone
 
 // Uplink:   even number
 // Downlink: odd number

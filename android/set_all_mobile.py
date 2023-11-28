@@ -1,3 +1,5 @@
+# run if the mobile phone has been turned off
+# or if we want to git pull the latest version
 from adbutils import adb
 
 serial_to_device = {
@@ -66,7 +68,9 @@ for device, info in zip(devices, devices_info):
         device.shell("su -c 'export GOCAHE=/data/go-build'")
         device.shell("su -c 'PATH=$PATH:/data/data/com.termux/files/usr/bin'")
         device.shell("su -c 'export GOMODCAHE=/data/go/pkg/mod'")
-        # TODO: git pull the latest version
+        # git pull the latest version and go build
+        print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
+        device.shell("su -c 'go build ./client/client.go'")
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
         for tool in tools:

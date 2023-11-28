@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# run if the mobile device is reconnected
+
 # Command Usage:
 # pip3 install adbutils
 # ./auto_mi_iperf.py

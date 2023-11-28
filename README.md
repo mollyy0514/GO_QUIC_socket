@@ -50,13 +50,16 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 - Modulize socket code, so that it can automatically organize the experiment result. Especially tls_key.log for QUIC need to be stored in order to check previous experiment data in Wireshark.
 
 **1120**:
-- implement qlog & qvis
+- Implement qlog & qvis
 
 **1122**:
-- connect to devices and assign ports
+- Connect to devices and assign ports
+
+**1127**:
+- Open sockets for every UDP phone
+
 
 ## Descrption
-
 Comparison:
 - Stream Socket:
     - Dedicated & end-to-end channel between server and client.
