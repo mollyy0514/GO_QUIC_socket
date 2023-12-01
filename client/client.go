@@ -1,4 +1,4 @@
-package client
+package main
 
 import (
 	"context"
@@ -46,7 +46,7 @@ func main() {
 	defer cancel()
 
 	// capture packets in client side
-	subProcess := Start_tcpdump(password)
+	subProcess := Start_client_tcpdump(password)
 
 	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
@@ -83,19 +83,19 @@ func main() {
 		seq++
 	}
 	print("times up")
-	Close_tcpdump(subProcess)
+	Close_client_tcpdump(subProcess)
 
 	// Response from server
 	// responseBuf := make([]byte, bufferMaxSize)
 	// ReceiveResponse(stream, responseBuf)
 }
 
-func Start_tcpdump(password string) (*exec.Cmd) {
+func Start_client_tcpdump(password string) (*exec.Cmd) {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("./data/capturequic_c_%d%d%d.pcap", y, m, d)
+	filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
 	command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, PORT, filepath)
 	subProcess := exec.Command("sh", "-c", command)
 
@@ -107,7 +107,7 @@ func Start_tcpdump(password string) (*exec.Cmd) {
 	return subProcess
 }
 
-func Close_tcpdump(cmd *exec.Cmd) {
+func Close_client_tcpdump(cmd *exec.Cmd) {
 	quit := make(chan os.Signal, 1)
     signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
     <-quit

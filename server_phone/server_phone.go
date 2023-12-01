@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"GO_QUIC_socket/devices"
@@ -27,28 +28,46 @@ const packet_length = 250
 const SERVER = "0.0.0.0"
 
 func main() {
+
+	// // Retrieve command-line arguments
+	// args := os.Args
+	// // Access the argument at index 1 (index 0 is the program name)
+	// password := args[1]
+
 	fmt.Println("Starting server...")
 
 	// Define command-line flags
+	_password := flag.String("p", "", "password")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
 	// _bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	// _length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
 	// _duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	flag.Parse()
+	// set the password for sudo
 
 	_devices_string := *_devices
-	devicesList := Get_Serial(_devices_string)
+	devicesList := Get_devices(_devices_string)
 	portsList := Get_Port(devicesList)
-	deviceToPort := make(map[string][]int)
-	for i, device := range devicesList {
-		deviceToPort[device] = []int{portsList[i][0], portsList[i][1]}
-	}
+	// deviceToPort := make(map[string][]int)
+	// for i, device := range devicesList {
+	// 	deviceToPort[device] = []int{portsList[i][0], portsList[i][1]}
+	// }
+	print(len(portsList))
 
 	for i := 0; i < len(portsList); i++ {
-		Start_tcpdump(portsList[i][0])
-		time.Sleep(1 * time.Second)
-		go EchoQuicServer(SERVER, portsList[i][0])
+		Start_tcpdump(*_password, devicesList[i], portsList[i][0])
 	}
+	// Sync between goroutines.
+	var wg sync.WaitGroup
+	for i := 0; i < len(portsList); i++ {
+		wg.Add(1)
+		defer wg.Done()
+		// go func() {
+		go EchoQuicServer(SERVER, portsList[i][0])
+		// }()
+		// select {}
+	}
+	wg.Wait()
 }
 
 func HandleQuicStream(stream quic.Stream) {
@@ -63,7 +82,7 @@ func HandleQuicStream(stream quic.Stream) {
 		// responseString := "server received!"
 		// responseMsg := []byte(responseString)
 		// response(stream, responseMsg)
-		
+
 		seq += 1
 	}
 }
@@ -131,22 +150,23 @@ func generateTLSConfig() *tls.Config {
 	}
 }
 
-func Start_tcpdump(port int) {
+func Start_tcpdump(password string, device string, port int) {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	date := fmt.Sprintf("%d%d%d", y, m, d)
-	filepath := fmt.Sprintf("./data/capturequic_s_%s.pcap", date)
-	command := fmt.Sprintf("sudo tcpdump port %d -w %s", port, filepath)
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+	filepath := fmt.Sprintf("./data/capturequic_s_%s_%s.pcap", date, device)
+	command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, port, filepath)
 	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("tcpdump start for: %02d \n", port)
 }
 
-func Get_Serial(_devices_string string) []string {
+func Get_devices(_devices_string string) []string {
 	var devicesList []string
 	// var serialsList []string
 	if strings.Contains(_devices_string, "-") {

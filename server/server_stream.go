@@ -35,14 +35,13 @@ func main() {
 	quicPort := flag.Int("quic", PORT, "QUIC port to listen")
 	flag.Parse()
 
-	start_tcpdump()
+	Start_server_tcpdump()
 
-	go echoQuicServer(*host, *quicPort)
-
+	go EchoQuicServer(*host, *quicPort)
 	select {}
 }
 
-func handleQuicStream(stream quic.Stream) {
+func HandleQuicStream(stream quic.Stream) {
 
 	seq := 0
 	// Open or create a file to store the floats in JSON format
@@ -54,7 +53,7 @@ func handleQuicStream(stream quic.Stream) {
 	defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
-		ts := receive(stream, buf)
+		ts := Server_receive(stream, buf)
 		fmt.Printf("Received: %f\n", ts)
 
 		// Marshal the float to JSON and append it to the file
@@ -73,20 +72,20 @@ func handleQuicStream(stream quic.Stream) {
 	}
 }
 
-func handleQuicSession(sess quic.Connection) {
+func HandleQuicSession(sess quic.Connection) {
 	for {
 		// create a stream to receive message, and also create a channel for communication
 		stream, err := sess.AcceptStream(context.Background())
 		if err != nil {
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
-		go handleQuicStream(stream)
+		go HandleQuicStream(stream)
 	}
 }
 
 // Start a server that echos all data on top of QUIC
-func echoQuicServer(host string, quicPort int) error {
-	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(), &quic.Config{
+func EchoQuicServer(host string, quicPort int) error {
+	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
 		EnableDatagrams: true,
 	})
@@ -105,12 +104,12 @@ func echoQuicServer(host string, quicPort int) error {
 			return err
 		}
 
-		go handleQuicSession(sess)
+		go HandleQuicSession(sess)
 	}
 }
 
 // Setup a bare-bones TLS config for the server
-func generateTLSConfig() *tls.Config {
+func GenerateTLSConfig() *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
@@ -146,12 +145,12 @@ func generateTLSConfig() *tls.Config {
 // 	return tmp
 // }
 
-func start_tcpdump() {
+func Start_server_tcpdump() {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	date := fmt.Sprintf("%d%d%d", y, m, d)
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
 	filepath := fmt.Sprintf("./data/capturequic_s_%s.pcap", date)
 	command := fmt.Sprintf("sudo tcpdump port %d -w %s", PORT, filepath)
 	cmd := exec.Command("sh", "-c", command)
@@ -161,7 +160,7 @@ func start_tcpdump() {
 	}
 }
 
-func receive(stream quic.Stream, buf []byte) float64 {
+func Server_receive(stream quic.Stream, buf []byte) float64 {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])

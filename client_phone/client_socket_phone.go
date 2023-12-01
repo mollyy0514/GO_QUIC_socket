@@ -2,11 +2,13 @@
 // Since we might implement both UL&DL in the future (we only use UL for now),
 // I still assign 2 ports for each device, ports[0] for UL, ports[1] for DL
 
-package client_phone
+package main
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
+	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
@@ -16,8 +18,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"GO_QUIC_socket/client"
 
 	"github.com/quic-go/quic-go"
 )
@@ -86,8 +86,8 @@ func main() {
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
-		message := client.Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
-		client.Transmit(stream, message)
+		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
+		Transmit(stream, message)
 		time.Sleep(500 * time.Millisecond)
 		seq++
 	}
@@ -100,7 +100,7 @@ func Start_tcpdump(portsList []string) *exec.Cmd {
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("./data/capturequic_c_%d%d%d.pcap", y, m, d)
+	filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
 	// command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, PORT, filepath)
 	command := fmt.Sprintf("tcpdump port %s -w %s", portsList[0], filepath)
 	subProcess := exec.Command("sh", "-c", command)
@@ -117,4 +117,35 @@ func Close_tcpdump(cmd *exec.Cmd) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+}
+
+func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
+	var message []byte
+	message = append(message, make([]byte, 4)...)
+	binary.BigEndian.PutUint32(message[:4], euler)
+	message = append(message, make([]byte, 4)...)
+	binary.BigEndian.PutUint32(message[4:8], pi)
+	message = append(message, make([]byte, 4)...)
+	binary.BigEndian.PutUint32(message[8:12], datetimedec)
+	message = append(message, make([]byte, 4)...)
+	binary.BigEndian.PutUint32(message[12:16], microsec)
+	message = append(message, make([]byte, 4)...)
+	binary.BigEndian.PutUint32(message[16:20], seq)
+
+	// add random additional data to 250 bytes
+	msgLength := len(message)
+	if msgLength < PACKET_LEN {
+		randomBytes := make([]byte, PACKET_LEN-msgLength)
+		rand.Read(randomBytes)
+		message = append(message, randomBytes...)
+	}
+
+	return message
+}
+
+func Transmit(stream quic.Stream, message []byte) {
+	_, err := stream.Write(message)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
