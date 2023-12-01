@@ -81,9 +81,8 @@ def all_process_end(procs):
     return True
 
 procs = []
-
 for device, port, serial in zip(devices, ports, serials):
-    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./socket_phone ' + \
+    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_socket_phone ' + \
             f'-H {HOST} -d {device} -p {port[0]},{port[1]} -b {bitrate} -l {length} -t {total_time}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)

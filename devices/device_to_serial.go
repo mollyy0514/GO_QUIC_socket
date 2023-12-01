@@ -1,6 +1,6 @@
-package client_phone
+package devices
 
-var device_to_serial = map[string]string {
+var Device_to_serial = map[string]string {
     "sm00":"R5CRA1ET5KB",
     "sm01":"R5CRA1D2MRJ",
     "sm02":"R5CRA1GCHFV",
@@ -36,7 +36,7 @@ var device_to_serial = map[string]string {
 }
 
 
-var serial_to_device = map[string]string {
+var Serial_to_device = map[string]string {
     "R5CRA1ET5KB":"sm00",
     "R5CRA1D2MRJ":"sm01",
     "R5CRA1GCHFV":"sm02",

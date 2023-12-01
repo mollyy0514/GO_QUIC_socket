@@ -1,9 +1,9 @@
-package client_phone
+package devices
 
 // Uplink:   even number
 // Downlink: odd number
 
-var device_to_port = map[string][2]int {
+var Device_to_port = map[string][2]int {
 	"xm00": {3230, 3231},
 	"xm01": {3232, 3233},
 	"xm02": {3234, 3235},
@@ -39,7 +39,7 @@ var device_to_port = map[string][2]int {
 	"unam": {3280, 3281},
 }
 
-var port_to_device = map[string]string {
+var Port_to_device = map[string]string {
 	"3230": "xm00",
 	"3231": "xm00",
 	"3232": "xm01",

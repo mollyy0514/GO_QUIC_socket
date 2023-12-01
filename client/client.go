@@ -29,7 +29,7 @@ var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
 
-func client() {
+func main() {
 	// set the password for sudo
 	// Retrieve command-line arguments
 	args := os.Args
@@ -46,7 +46,7 @@ func client() {
 	defer cancel()
 
 	// capture packets in client side
-	subProcess := start_tcpdump(password)
+	subProcess := Start_tcpdump(password)
 
 	// connect to server IP. Session is like the socket of TCP/IP
 	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
@@ -77,20 +77,20 @@ func client() {
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
-		message := create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
-		transmit(stream, message)
+		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
+		Transmit(stream, message)
 		time.Sleep(500 * time.Millisecond)
 		seq++
 	}
 	print("times up")
-	close_tcpdump(subProcess)
+	Close_tcpdump(subProcess)
 
 	// Response from server
 	// responseBuf := make([]byte, bufferMaxSize)
-	// receiveResponse(stream, responseBuf)
+	// ReceiveResponse(stream, responseBuf)
 }
 
-func start_tcpdump(password string) (*exec.Cmd) {
+func Start_tcpdump(password string) (*exec.Cmd) {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
@@ -107,13 +107,13 @@ func start_tcpdump(password string) (*exec.Cmd) {
 	return subProcess
 }
 
-func close_tcpdump(cmd *exec.Cmd) {
+func Close_tcpdump(cmd *exec.Cmd) {
 	quit := make(chan os.Signal, 1)
     signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
     <-quit
 }
 
-func create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
+func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
 	var message []byte
 	message = append(message, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(message[:4], euler)
@@ -137,14 +137,14 @@ func create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	return message
 }
 
-func transmit(stream quic.Stream, message []byte) {
+func Transmit(stream quic.Stream, message []byte) {
 	_, err := stream.Write(message)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-// func receiveResponse(stream quic.Stream, responseBuf []byte) {
+// func ReceiveResponse(stream quic.Stream, responseBuf []byte) {
 // 	size, err := stream.Read(responseBuf)
 // 	if err != nil {
 // 		fmt.Println(err)
