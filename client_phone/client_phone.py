@@ -84,7 +84,7 @@ def all_process_end(procs):
 procs = []
 for device, port, serial in zip(devices, ports, serials):
     # device.shell("su -c 'go build ./client_phone/client_socket_phone'")
-    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && go run ./client_phone/client_socket_phone.go ' + \
+    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && source /data/go-setup.sh && go run ./client_phone/client_socket_phone.go ' + \
             f'-H {HOST} -d {device} -p {port[0]},{port[1]} -b {bitrate} -l {length} -t {total_time}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
