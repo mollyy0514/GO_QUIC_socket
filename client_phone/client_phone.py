@@ -4,9 +4,10 @@ import os
 import sys
 import argparse
 import subprocess
-sys.path.append('../devices')
-from devices.device_to_port import device_to_port
-from devices.device_to_serial import device_to_serial
+# sys.path.append('../devices')
+# sys.path.insert(1, '/path/to/application/app/folder')
+from device_to_port import device_to_port
+from device_to_serial import device_to_serial
 
 #=================argument parsing======================
 parser = argparse.ArgumentParser()
@@ -82,7 +83,8 @@ def all_process_end(procs):
 
 procs = []
 for device, port, serial in zip(devices, ports, serials):
-    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_socket_phone ' + \
+    # device.shell("su -c 'go build ./client_phone/client_socket_phone'")
+    su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && go run ./client_phone/client_socket_phone.go ' + \
             f'-H {HOST} -d {device} -p {port[0]},{port[1]} -b {bitrate} -l {length} -t {total_time}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)

@@ -66,11 +66,11 @@ for device, info in zip(devices, devices_info):
         device.shell("su -c 'chmod +x /bin/python3'")
         # GO environment setting
         device.shell("su -c 'export GOCAHE=/data/go-build'")
-        device.shell("su -c 'PATH=$PATH:/data/data/com.termux/files/usr/bin'")
+        device.shell("su -c 'export PATH=$PATH:/data/data/com.termux/files/usr/bin'")
         device.shell("su -c 'export GOMODCAHE=/data/go/pkg/mod'")
         # git pull the latest version and go build
         print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
-        device.shell("su -c 'go build ./client/client.go'")
+        device.shell("su -c 'source /data/go-setup.sh && go build ./client/client.go'")
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
         for tool in tools:

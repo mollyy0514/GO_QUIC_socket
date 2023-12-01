@@ -75,11 +75,12 @@ for device, info in zip(devices, devices_info):
     print(info[2], device.shell("su -c 'getprop sys.usb.config'"))
     print(info[2], device.shell("su -c 'setprop sys.usb.config diag,serial_cdev,rmnet,adb'"))
 
-for device, info in zip(devices, devices_info):
+# for device, info in zip(devices, devices_info):
+    # device.shell("su -c 'mount -o remount,rw /system/bin'")
     # GO environment setting
-    device.shell("su -c 'export GOCAHE=/data/go-build'")
-    device.shell("su -c 'PATH=$PATH:/data/data/com.termux/files/usr/bin'")
-    device.shell("su -c 'export GOMODCAHE=/data/go/pkg/mod'")
+#     device.shell("su -c 'export GOCAHE=/data/go-build'")
+#     device.shell("su -c 'PATH=$PATH:/data/data/com.termux/files/usr/bin'")
+#     device.shell("su -c 'export GOMODCAHE=/data/go/pkg/mod'")
     
     # cd to GO_QUIC_socket
-    device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket'")
+    # device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket'")
