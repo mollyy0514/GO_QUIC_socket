@@ -7,7 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"encoding/json"
+	// "encoding/json"
 	"encoding/pem"
 	"os"
 	"time"
@@ -45,23 +45,26 @@ func HandleQuicStream(stream quic.Stream) {
 
 	seq := 0
 	// Open or create a file to store the floats in JSON format
-	timeFile, err := os.OpenFile("./data/timefloats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
-	}
-	defer timeFile.Close()
+	// timeFile, err := os.OpenFile("./data/timefloats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// if err != nil {
+	// 	fmt.Println("Error opening file:", err)
+	// 	return
+	// }
+	// defer timeFile.Close()
 	for {
 		buf := make([]byte, packet_length)
-		ts := Server_receive(stream, buf)
+		ts, err := Server_receive(stream, buf)
+		if err != nil {
+			return
+		}
 		fmt.Printf("Received: %f\n", ts)
 
 		// Marshal the float to JSON and append it to the file
-		encoder := json.NewEncoder(timeFile)
-		if err := encoder.Encode(ts); err != nil {
-			fmt.Println("Error encoding JSON:", err)
-			return
-		}
+		// encoder := json.NewEncoder(timeFile)
+		// if err := encoder.Encode(ts); err != nil {
+		// 	fmt.Println("Error encoding JSON:", err)
+		// 	return
+		// }
 
 		// sending response to client
 		// responseString := "server received!"
@@ -160,16 +163,17 @@ func Start_server_tcpdump() {
 	}
 }
 
-func Server_receive(stream quic.Stream, buf []byte) float64 {
+func Server_receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
 	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
 	if err != nil {
-		fmt.Println(err)
+		return -115, err
+		// fmt.Println(err)
 	}
 
-	return ts
+	return ts, err
 }
 
 // func response(stream quic.Stream, responseMsg []byte) {

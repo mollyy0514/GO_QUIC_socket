@@ -11,8 +11,10 @@ from device_to_serial import device_to_serial
 
 #=================argument parsing======================
 parser = argparse.ArgumentParser()
+# parser.add_argument("-H", "--host", type=str,
+#                     help="server ip address", default="140.112.20.183")   # Lab249 外網
 parser.add_argument("-H", "--host", type=str,
-                    help="server ip address", default="140.112.20.183")   # Lab249 外網
+                    help="server ip address", default="192.168.1.79")
 parser.add_argument("-d", "--devices", type=str, nargs='+',   # input list of devices sep by 'space'
                     help="list of devices", default=["unam"])
 parser.add_argument("-p", "--ports", type=str, nargs='+',     # input list of port numbers sep by 'space'
@@ -83,7 +85,7 @@ def all_process_end(procs):
 
 procs = []
 for device, port, serial in zip(devices, ports, serials):
-    # device.shell("su -c 'go build ./client_phone/client_socket_phone'")
+    # device.shell("su -c 'source /data/go-setup.sh && go build ./client_phone/client_socket_phone'")
     su_cmd = 'cd /data/data/com.termux/files/home/GO_QUIC_socket && source /data/go-setup.sh && go run ./client_phone/client_socket_phone.go ' + \
             f'-H {HOST} -d {device} -p {port[0]},{port[1]} -b {bitrate} -l {length} -t {total_time}'
     adb_cmd = f"su -c '{su_cmd}'"
