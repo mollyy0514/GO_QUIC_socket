@@ -50,7 +50,7 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 - Modulize socket code, so that it can automatically organize the experiment result. Especially tls_key.log for QUIC need to be stored in order to check previous experiment data in Wireshark.
 
 **1120**:
-- Implement qlog & qvis
+- ==Implement qlog & qvis==
 
 **1122**:
 - Connect to devices and assign ports
@@ -58,6 +58,11 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 **1127**:
 - Open sockets for every UDP phone
 
+**1204**:
+- Open sockets for every UDP phone
+- Fix pop out EOF problem
+- Run concurrent program
+- So the procedure is: run concurrently on multiple ports -> check adb works well -> add downlink in order to dump the logs out
 
 ## Descrption
 Comparison:

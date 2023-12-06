@@ -38,7 +38,7 @@ func main() {
 
 	// Define command-line flags
 	_password := flag.String("p", "", "password")
-	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
+	_devices := flag.String("d", "sm00-01", "list of devices (space-separated)")
 	// _bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	// _length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
 	// _duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
@@ -75,7 +75,10 @@ func HandleQuicStream(stream quic.Stream) {
 	seq := 0
 	for {
 		buf := make([]byte, packet_length)
-		ts := Receive(stream, buf)
+		ts, err := Receive(stream, buf)
+		if err != nil {
+			return
+		}
 		fmt.Printf("Received: %f\n", ts)
 
 		// sending response to client
@@ -200,14 +203,15 @@ func Get_Port(devicesList []string) [][2]int {
 	return portsList
 }
 
-func Receive(stream quic.Stream, buf []byte) float64 {
+func Receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
 	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
 	if err != nil {
-		fmt.Println(err)
+		return -115, err
+		// fmt.Println(err)
 	}
 
-	return ts
+	return ts, err
 }
