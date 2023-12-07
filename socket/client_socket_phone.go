@@ -108,10 +108,10 @@ func Start_tcpdump(portsList []string) *exec.Cmd {
 	d := currentTime.Day()
 	filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
 	// command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, PORT, filepath)
-	command := fmt.Sprintf("tcpdump port %s -w %s", portsList[0], filepath)
+	command := fmt.Sprintf("su -c tcpdump port %s -w %s", portsList[0], filepath)
 	subProcess := exec.Command("sh", "-c", command)
-
 	err := subProcess.Start()
+	fmt.Printf("file created! \n")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -41,7 +41,7 @@ func main() {
 		port := fmt.Sprintf("%d,%d", portsList[i][0], portsList[i][1])
 		defer wg.Done()
 		// command := fmt.Sprintf("echo %s | sudo -S go run ./socket/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", *_password, *_host, *_devices, port, *_bitrate, *_length, *_duration)
-		command := fmt.Sprintf("adb -s %s shell su -c cd /data/data/com.termux/files/home/GO_QUIC_socket && source /data/go-setup.sh && go run ./client_phone/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", serialsList[i], *_host, *_devices, port, *_bitrate, *_length, *_duration)
+		command := fmt.Sprintf("adb -s %s shell su -c cd /data/data/com.termux/files/home/GO_QUIC_socket && go run ./socket/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", serialsList[i], *_host, *_devices, port, *_bitrate, *_length, *_duration)
 		fmt.Print(command)
 		cmd := exec.Command("sh", "-c", command)
 		cmd.Stdout = os.Stdout
