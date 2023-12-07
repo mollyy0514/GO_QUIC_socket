@@ -9,10 +9,12 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
+	// "path/filepath"
 
 	"flag"
 	"fmt"
 	"log"
+
 	// "os"
 	"os/exec"
 	// "os/signal"
@@ -106,10 +108,11 @@ func Start_tcpdump(portsList []string) *exec.Cmd {
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
+	filepath := fmt.Sprintf("/sdcard/pcapdir/capturequic_c_%02d%02d%02d.pcap", y, m, d)
+	// filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
 	// command := fmt.Sprintf("echo wmnlab | sudo -S tcpdump port %s -w %s", portsList[0], filepath)
-	command := fmt.Sprintf("tcpdump port %s -w %s", portsList[0], filepath)
-	subProcess := exec.Command("su", "-c", command)
+	command := fmt.Sprintf("su -c tcpdump port %s -w %s", portsList[0], filepath)
+	subProcess := exec.Command("sh", "-c", command)
 	err := subProcess.Start()
 	fmt.Printf("file created! \n")
 	if err != nil {
