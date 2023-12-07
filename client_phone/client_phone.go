@@ -44,6 +44,10 @@ func main() {
 		command := fmt.Sprintf("adb -s %s shell su -c cd /data/data/com.termux/files/home/GO_QUIC_socket && go run ./socket/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", serialsList[i], *_host, *_devices, port, *_bitrate, *_length, *_duration)
 		fmt.Print(command)
 		cmd := exec.Command("sh", "-c", command)
+
+		// Set the working directory for the command
+		cmd.Dir = "/data/data/com.termux/files/home/GO_QUIC_socket"
+
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		// err := cmd.Run()	// kill the program when times up, but won't kill tcpdump
