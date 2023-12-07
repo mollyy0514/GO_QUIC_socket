@@ -1,9 +1,9 @@
 # run if the mobile phone has been turned off
 # or if we want to git pull the latest version
 from adbutils import adb
-
+# "R5CRA1ET5KB":"sm00",
 serial_to_device = {
-    "R5CRA1ET5KB":"sm00",
+    "R5CR20FDXHK":"sm00",
     "R5CRA1D2MRJ":"sm01",
     "R5CRA1GCHFV":"sm02",
     "R5CRA1JYYQJ":"sm03",

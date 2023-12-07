@@ -1,7 +1,7 @@
 package devices
-
+//  "sm00":"R5CRA1ET5KB",
 var Device_to_serial = map[string]string {
-    "sm00":"R5CRA1ET5KB",
+    "sm00":"R5CR20FDXHK",
     "sm01":"R5CRA1D2MRJ",
     "sm02":"R5CRA1GCHFV",
     "sm03":"R5CRA1JYYQJ",

@@ -13,11 +13,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
+	// "os"
 	"os/exec"
-	"os/signal"
+	// "os/signal"
 	"strings"
-	"syscall"
+	// "syscall"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -41,8 +41,9 @@ func main() {
 	_duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	// Parse command-line arguments
 	flag.Parse()
-	fmt.Print("info ", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration, "\n")
+	fmt.Printf("info %s %s %s %s %s %d \n", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration)
 
+	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
 
 	// set TLS
@@ -64,6 +65,7 @@ func main() {
 	if err != nil {
 		fmt.Print("err: ")
 		fmt.Println(err)
+		return
 	}
 	fmt.Print("dialed \n")
 	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
@@ -118,9 +120,10 @@ func Start_tcpdump(portsList []string) *exec.Cmd {
 }
 
 func Close_tcpdump(cmd *exec.Cmd) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// quit := make(chan os.Signal, 1)
+	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// <-quit
+	fmt.Print(cmd)
 }
 
 func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {

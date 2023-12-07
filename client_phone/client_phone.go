@@ -1,9 +1,10 @@
 package main
 
 import (
+	// "bytes"
 	"flag"
 	"fmt"
-	"log"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 func main() {
 	// Define command-line flags
+	// _password := flag.String("p", "", "password for sudo command")
 	_host := flag.String("H", "192.168.1.79", "server ip address")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
 	// _ports := flag.String("p", "3200", "ports to bind (space-separated)")
@@ -29,21 +31,32 @@ func main() {
 	portsList := Get_Ports(devicesList)
 
 	for i := 0; i < len(portsList); i++ {
-		fmt.Printf("device: %s %s \n", devicesList[i], serialsList[i])
+		fmt.Printf("device: %s %s %d \n", devicesList[i], serialsList[i], portsList[i][0])
 	}
 
 	var wg sync.WaitGroup
 	wg.Add(len(portsList))
 	for i := 0; i < len(portsList); i++ {
-		fmt.Printf("device: %s \n", devicesList[i])
+		fmt.Printf("device: %s start \n", devicesList[i])
 		port := fmt.Sprintf("%d,%d", portsList[i][0], portsList[i][1])
 		defer wg.Done()
-		command := fmt.Sprintf("go run ./socket/client_socket_phone.go -H %s -d %s -p %d,%d -b %s -l %s -t %d", *_host, *_devices, port[0], port[1], *_bitrate, *_length, *_duration)
+		// command := fmt.Sprintf("echo %s | sudo -S go run ./socket/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", *_password, *_host, *_devices, port, *_bitrate, *_length, *_duration)
+		command := fmt.Sprintf("adb -s %s shell su -c cd /data/data/com.termux/files/home/GO_QUIC_socket && source /data/go-setup.sh && go run ./client_phone/client_socket_phone.go -H %s -d %s -p %s -b %s -l %s -t %d", serialsList[i], *_host, *_devices, port, *_bitrate, *_length, *_duration)
+		fmt.Print(command)
 		cmd := exec.Command("sh", "-c", command)
-		err := cmd.Start()
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		// err := cmd.Run()	// kill the program when times up, but won't kill tcpdump
+		err := cmd.Start()	// won't kill the program when times up 
 		if err != nil {
-			log.Fatal(err)
+			// fmt.Println(fmt.Sprint(err) + ": " + cmd.Stderr)
+			// return
+			fmt.Print("err: ")
+			fmt.Println(err)
+			return
 		}
+		// Print the combined output
+		fmt.Println(cmd.Stdout)
 		// Socket(_host, _devices, &port, _bitrate, _length, _duration)
 	}
 
