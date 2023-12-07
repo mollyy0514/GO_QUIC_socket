@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,7 +27,7 @@ func main() {
 	devicesList, serialsList := Get_Devices_and_Serials(_devices_string)
 
 	portsList := Get_Ports(devicesList)
-	
+
 	for i := 0; i < len(portsList); i++ {
 		fmt.Printf("device: %s %s \n", devicesList[i], serialsList[i])
 	}
@@ -36,15 +38,14 @@ func main() {
 		fmt.Printf("device: %s \n", devicesList[i])
 		port := fmt.Sprintf("%d,%d", portsList[i][0], portsList[i][1])
 		defer wg.Done()
-		Socket(_host, _devices, &port, _bitrate, _length, _duration)
+		command := fmt.Sprintf("go run ./socket/client_socket_phone.go -H %s -d %s -p %d,%d -b %s -l %s -t %d", *_host, *_devices, port[0], port[1], *_bitrate, *_length, *_duration)
+		cmd := exec.Command("sh", "-c", command)
+		err := cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Socket(_host, _devices, &port, _bitrate, _length, _duration)
 	}
-
-	// command := fmt.Sprintf("go run ./client_phone/client_socket_phone.go -H %s -d %s -p %d,%d -b %s -l %d -t %d", HOST, device, port[0], port[1], bitrate, length, total_time)
-	// cmd := exec.Command("sh", "-c", command)
-	// err := cmd.Start()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
 
 	print("---End Of File---")
 }

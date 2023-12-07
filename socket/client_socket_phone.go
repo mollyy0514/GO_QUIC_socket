@@ -10,7 +10,7 @@ import (
 	"crypto/tls"
 	"encoding/binary"
 
-	// "flag"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -30,16 +30,17 @@ const SERVER = "140.112.20.183"
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
 
-func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
-	// // Define command-line flags
-	// _host := flag.String("H", "192.168.1.79", "server ip address")
-	// _devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	// _ports := flag.String("p", "3200", "ports to bind (space-separated)")
-	// _bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
-	// _length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
-	// _duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
-	// // Parse command-line arguments
-	// flag.Parse()
+// func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
+func main() {
+	// Define command-line flags
+	_host := flag.String("H", "192.168.1.79", "server ip address")
+	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
+	_ports := flag.String("p", "3200", "ports to bind (space-separated)")
+	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
+	_length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
+	_duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
+	// Parse command-line arguments
+	flag.Parse()
 	fmt.Print("info ", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration, "\n")
 
 	portsList := strings.Split(*_ports, ",")

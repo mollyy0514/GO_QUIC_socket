@@ -70,7 +70,7 @@ func main() {
 	wg.Wait()
 }
 
-func HandleQuicStream(stream quic.Stream) {
+func HandleQuicStream(stream quic.Stream, quicPort int) {
 
 	seq := 0
 	for {
@@ -79,7 +79,7 @@ func HandleQuicStream(stream quic.Stream) {
 		if err != nil {
 			return
 		}
-		fmt.Printf("Received: %f\n", ts)
+		fmt.Printf("Received %d: %f\n", quicPort, ts)
 
 		// sending response to client
 		// responseString := "server received!"
@@ -90,14 +90,14 @@ func HandleQuicStream(stream quic.Stream) {
 	}
 }
 
-func HandleQuicSession(sess quic.Connection) {
+func HandleQuicSession(sess quic.Connection, quicPort int) {
 	for {
 		// create a stream to receive message, and also create a channel for communication
 		stream, err := sess.AcceptStream(context.Background())
 		if err != nil {
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
-		go HandleQuicStream(stream)
+		go HandleQuicStream(stream, quicPort)
 	}
 }
 
@@ -122,7 +122,7 @@ func EchoQuicServer(host string, quicPort int) error {
 			return err
 		}
 
-		go HandleQuicSession(sess)
+		go HandleQuicSession(sess, quicPort)
 	}
 }
 
