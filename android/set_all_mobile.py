@@ -78,6 +78,7 @@ for device, info in zip(devices, devices_info):
         device.shell("su -c 'chmod +x /sbin/python3'")
         # TODO: GO environment setting
     
+    
     # # test tools
     # print(info[2], 'iperf3m:', device.shell("su -c 'iperf3m --version'"))
     # print("-----------------------------------")
