@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 export GOCACHE=/data/go-build
 export PATH=$PATH:/data/data/com.termux/files/usr/bin
