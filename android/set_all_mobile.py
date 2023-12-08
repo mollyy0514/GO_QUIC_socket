@@ -68,7 +68,7 @@ for device, info in zip(devices, devices_info):
         # git pull the latest version and go build
         print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
         device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh'")
-        # print("hi \n")
+
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
         for tool in tools:
