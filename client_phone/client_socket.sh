@@ -7,5 +7,5 @@ export GOMODCACHE=/data/go/pkg/mod
 cd /data/data/com.termux/files/home/GO_QUIC_socket
 chmod +x ./socket/client_socket_phone.go
 # println("Hello World!")
-go run ./socket/client_socket_phone.go > output.txt 2>&1
+go run ./socket/client_socket_phone.go > output.txt
 # ./socket/client_socket_phone
