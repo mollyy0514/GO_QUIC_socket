@@ -15,24 +15,19 @@ serial_to_device = {
     "R5CRA2EGJ5X":"sm09",
     "R5CRA1ET5KB":"sm10",
     "R5CRA1D2MRJ":"sm11",
-    "73e11a9f":"xm00",
-    "491d5141":"xm01",
-    "790fc81d":"xm02",
-    "e2df293a":"xm03",
-    "28636990":"xm04",
-    "f8fe6582":"xm05",
-    "d74749ee":"xm06",
-    "10599c8d":"xm07",
-    "57f67f91":"xm08",
-    "232145e8":"xm09",
-    "70e87dd6":"xm10",
-    "df7aeaf8":"xm11",
-    "e8c1eff5":"xm12",
-    "ec32dc1e":"xm13",
-    "2aad1ac6":"xm14",
-    "64545f94":"xm15",
-    "613a273a":"xm16",
-    "fe3df56f":"xm17",
+}
+
+device_to_port = {
+    "sm00": [3200, 3201],
+    "sm01": [3202, 3203],
+    "sm02": (3204, 3205),
+    "sm03": (3206, 3207),
+    "sm04": (3208, 3209),
+    "sm05": (3210, 3211),
+    "sm06": (3212, 3213),
+    "sm07": (3214, 3215),
+    "sm08": (3216, 3217),
+    "sm09": (3218, 3219),
 }
 
 devices_info = []
@@ -70,7 +65,8 @@ for device, info in zip(devices, devices_info):
         # git pull the latest version and go build
         print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
         device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
-        device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh'")
+        print(info[2], device_to_port[info[2]][0], "\n")
+        device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {} {}'".format(info[2], device_to_port[info[2]][0]))
         # TODO: print output in command
 
     elif info[2][2] == "xm":

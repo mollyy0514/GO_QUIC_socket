@@ -52,7 +52,7 @@ func main() {
 	// for i, device := range devicesList {
 	// 	deviceToPort[device] = []int{portsList[i][0], portsList[i][1]}
 	// }
-	print(len(portsList))
+	print("deviceCnt: ", len(portsList), "\n")
 
 	for i := 0; i < len(portsList); i++ {
 		Start_tcpdump(*_password, devicesList[i], portsList[i][0])
