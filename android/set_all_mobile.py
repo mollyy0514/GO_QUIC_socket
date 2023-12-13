@@ -1,6 +1,8 @@
 # run if the mobile phone has been turned off
 # or if we want to git pull the latest version
 from adbutils import adb
+import os
+import subprocess
 
 serial_to_device = {
     "R5CR20FDXHK":"sm00",
@@ -65,8 +67,6 @@ for device, info in zip(devices, devices_info):
         # git pull the latest version and go build
         print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
         device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
-        print(info[2], device_to_port[info[2]][0], "\n")
-        device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {} {}'".format(info[2], device_to_port[info[2]][0]))
         # TODO: print output in command
 
     elif info[2][2] == "xm":
@@ -79,24 +79,11 @@ for device, info in zip(devices, devices_info):
         # TODO: GO environment setting
     
 
-    # # test tools
-    # print(info[2], 'iperf3m:', device.shell("su -c 'iperf3m --version'"))
-    # print("-----------------------------------")
-    
-    # # UDP_Phone
-    # # 覆寫掉原本的 UDP_Phone
-    # su_cmd = 'rm -rf /sdcard/UDP_Phone && cp -r /sdcard/wmnl-handoff-research/experimental-tools-beta/udp-socket-programming/v3/UDP_Phone /sdcard'
-    # adb_cmd = f"su -c '{su_cmd}'"
-    # device.shell(su_cmd)
-    # print(info[2], 'Update UDP_Phone! v3')
-    # print("-----------------------------------")
-    
-    # # TCP_Phone
-    # # 覆寫掉原本的 TCP_Phone
-    # su_cmd = 'rm -rf /sdcard/TCP_Phone && cp -r /sdcard/wmnl-handoff-research/experimental-tools-beta/tcp-socket-programming/v3/TCP_Phone /sdcard'
-    # adb_cmd = f"su -c '{su_cmd}'"
-    # device.shell(su_cmd)
-    # print(info[2], 'Update TCP_Phone! v3')
-    # print("-----------------------------------")
+for info in devices_info:
+    print(info[0], info[2], "\n")
+    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {device_to_port[info[2]][0]}'
+    adb_cmd = f"su -c '{su_cmd}'"
+    p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
+    # procs.append(p)
 
 print('---End Of File---')
