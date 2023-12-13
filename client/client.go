@@ -20,8 +20,8 @@ import (
 	"github.com/quic-go/quic-go"
 )
 
-const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
-// const SERVER = "192.168.1.78"  // wmnlab local IP
+// const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
+const SERVER = "192.168.1.78"  // wmnlab local IP
 // const SERVER = "140.112.20.183"  // 249 public IP
 const PORT = 4242
 
@@ -65,7 +65,7 @@ func main() {
 	defer stream.Close()
 
 	// Duration to run the sending process
-	duration := 5 * time.Second
+	duration := 1 * time.Minute
 	seq := 1
 	start_time := time.Now()
 	euler := 271828

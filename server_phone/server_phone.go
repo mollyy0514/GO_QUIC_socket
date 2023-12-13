@@ -103,7 +103,7 @@ func HandleQuicSession(sess quic.Connection, quicPort int) {
 
 // Start a server that echos all data on top of QUIC
 func EchoQuicServer(host string, quicPort int) error {
-	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(), &quic.Config{
+	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), generateTLSConfig(quicPort), &quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
 		EnableDatagrams: true,
 	})
@@ -127,7 +127,7 @@ func EchoQuicServer(host string, quicPort int) error {
 }
 
 // Setup a bare-bones TLS config for the server
-func generateTLSConfig() *tls.Config {
+func generateTLSConfig(quicPort int) *tls.Config {
 	key, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
 		panic(err)
@@ -140,7 +140,8 @@ func generateTLSConfig() *tls.Config {
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
-	kl, _ := os.OpenFile("tls_key.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	keyFileName := fmt.Sprintf("./data/tls_key_%02d.log", quicPort)
+	kl, _ := os.OpenFile(keyFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
