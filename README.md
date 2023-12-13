@@ -62,7 +62,11 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 - Open sockets for every UDP phone
 - Fix pop out EOF problem
 - Run concurrent program
-- So the procedure is: run concurrently on multiple ports -> check adb works well -> add downlink in order to dump the logs out
+- So the procedure is: run concurrently on multiple ports -> check adb works well 
+
+**1213**:
+- Update phone serials
+- Test 2 phones
 
 ## Descrption
 Comparison:

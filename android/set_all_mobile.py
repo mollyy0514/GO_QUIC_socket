@@ -1,10 +1,10 @@
 # run if the mobile phone has been turned off
 # or if we want to git pull the latest version
 from adbutils import adb
-# "R5CRA1ET5KB":"sm00",
+
 serial_to_device = {
     "R5CR20FDXHK":"sm00",
-    "R5CRA1D2MRJ":"sm01",
+    "R5CR30P9Z8Y":"sm01",
     "R5CRA1GCHFV":"sm02",
     "R5CRA1JYYQJ":"sm03",
     "R5CRA1EV0XH":"sm04",
@@ -13,6 +13,8 @@ serial_to_device = {
     "R5CRA1ET22M":"sm07",
     "R5CRA1D23QK":"sm08",
     "R5CRA2EGJ5X":"sm09",
+    "R5CRA1ET5KB":"sm10",
+    "R5CRA1D2MRJ":"sm11",
     "73e11a9f":"xm00",
     "491d5141":"xm01",
     "790fc81d":"xm02",
@@ -69,7 +71,8 @@ for device, info in zip(devices, devices_info):
         print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
         device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
         device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh'")
-        # device.shell("su -c 'echo ?'")
+        # TODO: print output in command
+
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
         for tool in tools:

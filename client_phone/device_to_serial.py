@@ -1,6 +1,6 @@
 device_to_serial = {
-    "sm00":"R5CRA1ET5KB",
-    "sm01":"R5CRA1D2MRJ",
+    "sm00":"R5CR20FDXHK",
+    "sm01":"R5CR30P9Z8Y",
     "sm02":"R5CRA1GCHFV",
     "sm03":"R5CRA1JYYQJ",
     "sm04":"R5CRA1EV0XH",
@@ -9,6 +9,8 @@ device_to_serial = {
     "sm07":"R5CRA1ET22M",
     "sm08":"R5CRA1D23QK",
     "sm09":"R5CRA2EGJ5X",
+    "sm10":"R5CRA1ET5KB",
+    "sm11":"R5CRA1D2MRJ",
     "xm00":"73e11a9f",
     "xm01":"491d5141",
     "xm02":"790fc81d",
@@ -34,8 +36,8 @@ device_to_serial = {
 }
 
 serial_to_device = {
-    "R5CRA1ET5KB":"sm00",
-    "R5CRA1D2MRJ":"sm01",
+    "R5CR20FDXHK":"sm00",
+    "R5CR30P9Z8Y":"sm01",
     "R5CRA1GCHFV":"sm02",
     "R5CRA1JYYQJ":"sm03",
     "R5CRA1EV0XH":"sm04",
@@ -44,6 +46,8 @@ serial_to_device = {
     "R5CRA1ET22M":"sm07",
     "R5CRA1D23QK":"sm08",
     "R5CRA2EGJ5X":"sm09",
+    "R5CRA1ET5KB":"sm10",
+    "R5CRA1D2MRJ":"sm11",
     "73e11a9f":"xm00",
     "491d5141":"xm01",
     "790fc81d":"xm02",
