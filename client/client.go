@@ -49,8 +49,13 @@ func main() {
 	// capture packets in client side
 	subProcess := Start_client_tcpdump(password)
 
+	
+	// add 0rtt to quicConfig
+	quicConfig := quic.Config {
+		Allow0RTT: true,
+	}
 	// connect to server IP. Session is like the socket of TCP/IP
-	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
+	session, err := quic.DialAddrEarly(ctx, serverAddr, tlsConfig, &quicConfig)
 	if err != nil {
 		fmt.Println(err)
 	}

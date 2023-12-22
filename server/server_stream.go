@@ -82,15 +82,24 @@ func HandleQuicSession(sess quic.Connection) {
 		if err != nil {
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
-		go HandleQuicStream(stream)
+		// print remote address & 0rtt
+		state := sess.ConnectionState()
+		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, proto = %s\n",
+			sess.RemoteAddr(),
+			state.Used0RTT,
+			state.TLS.NegotiatedProtocol)
+		
+			go HandleQuicStream(stream)
 	}
 }
 
 // Start a server that echos all data on top of QUIC
 func EchoQuicServer(host string, quicPort int) error {
-	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quic.Config{
+	// ListenAddrEarly supports 0rtt
+	listener, err := quic.ListenAddrEarly(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
 		EnableDatagrams: true,
+		Allow0RTT: true,
 	})
 	if err != nil {
 		return err
