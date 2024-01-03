@@ -7,18 +7,23 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+
 	// "encoding/json"
 	"encoding/pem"
 	"os"
 	"time"
+
 	// "errors"
 	"flag"
 	"fmt"
 	"log"
 	"math/big"
 	"os/exec"
+
 	// "strconv"
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/logging"
+	"github.com/quic-go/quic-go/qlog"
 )
 
 // const bufferMaxSize = 1048576 // 1mb
@@ -35,7 +40,7 @@ func main() {
 	quicPort := flag.Int("quic", PORT, "QUIC port to listen")
 	flag.Parse()
 
-	Start_server_tcpdump()
+	// Start_server_tcpdump()
 
 	go EchoQuicServer(*host, *quicPort)
 	select {}
@@ -70,7 +75,7 @@ func HandleQuicStream(stream quic.Stream) {
 		// responseString := "server received!"
 		// responseMsg := []byte(responseString)
 		// response(stream, responseMsg)
-		
+
 		seq += 1
 	}
 }
@@ -84,23 +89,39 @@ func HandleQuicSession(sess quic.Connection) {
 		}
 		// print remote address & 0rtt
 		state := sess.ConnectionState()
-		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, proto = %s\n",
+		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, handshake = %v, TLSresume = %v, proto = %s\n",
 			sess.RemoteAddr(),
 			state.Used0RTT,
+			state.TLS.HandshakeComplete,
+			state.TLS.DidResume,
 			state.TLS.NegotiatedProtocol)
-		
-			go HandleQuicStream(stream)
+
+		go HandleQuicStream(stream)
 	}
 }
 
 // Start a server that echos all data on top of QUIC
 func EchoQuicServer(host string, quicPort int) error {
-	// ListenAddrEarly supports 0rtt
-	listener, err := quic.ListenAddrEarly(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quic.Config{
+	quicConfig := quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
 		EnableDatagrams: true,
 		Allow0RTT: true,
-	})
+		Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
+			role := "server"
+			if p == logging.PerspectiveClient {
+				role = "client"
+			}
+			filename := fmt.Sprintf("./log_%s_%s.qlog", connID, role)
+			f, err := os.Create(filename)
+			if err != nil {
+				fmt.Println("cannot generate qlog file")
+			}
+			// handle the error
+			return qlog.NewConnectionTracer(f, p, connID)
+		},
+	}
+	// ListenAddrEarly supports 0rtt
+	listener, err := quic.ListenAddr(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quicConfig)
 	if err != nil {
 		return err
 	}
@@ -186,9 +207,9 @@ func Server_receive(stream quic.Stream, buf []byte) (float64, error) {
 }
 
 // func response(stream quic.Stream, responseMsg []byte) {
-	// 	_, err := stream.Write(responseMsg)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }
+// 	_, err := stream.Write(responseMsg)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 // }

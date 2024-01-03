@@ -18,10 +18,13 @@ import (
 	// "strconv"
 	// "GO_QUIC_socket/android"
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/logging"
+	"github.com/quic-go/quic-go/qlog"
 )
 
+const SERVER = "127.0.0.1"
 // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
-const SERVER = "192.168.1.78"  // wmnlab local IP
+// const SERVER = "192.168.1.78" // wmnlab local IP
 // const SERVER = "140.112.20.183"  // 249 public IP
 const PORT = 4242
 
@@ -33,9 +36,9 @@ const PACKET_LEN = 250
 func main() {
 	// set the password for sudo
 	// Retrieve command-line arguments
-	args := os.Args
+	// args := os.Args
 	// Access the argument at index 1 (index 0 is the program name)
-	password := args[1]
+	// password := args[1]
 
 	// set TLS
 	tlsConfig := &tls.Config{
@@ -43,24 +46,37 @@ func main() {
 		NextProtos:         []string{"h3"},
 	}
 
+	// capture packets in client side
+	// subProcess := Start_client_tcpdump(password)
+
+	// add 0rtt to quicConfig
+	quicConfig := quic.Config{
+		Allow0RTT: true,
+		Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
+			role := "server"
+			if p == logging.PerspectiveClient {
+				role = "client"
+			}
+			filename := fmt.Sprintf("./log_%s_%s.qlog", connID, role)
+			f, err := os.Create(filename)
+			if err != nil {
+				fmt.Println("cannot generate qlog file")
+			}
+			// handle the error
+			return qlog.NewConnectionTracer(f, p, connID)
+		},
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
 	defer cancel()
 
-	// capture packets in client side
-	subProcess := Start_client_tcpdump(password)
-
-	
-	// add 0rtt to quicConfig
-	quicConfig := quic.Config {
-		Allow0RTT: true,
-	}
 	// connect to server IP. Session is like the socket of TCP/IP
-	session, err := quic.DialAddrEarly(ctx, serverAddr, tlsConfig, &quicConfig)
+	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, &quicConfig)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("err: ", err)
 	}
 	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
-
+		
 	// create a stream
 	// context.Background() is similar to a channel, giving QUIC a way to communicate
 	stream, err := session.OpenStreamSync(context.Background())
@@ -70,7 +86,7 @@ func main() {
 	defer stream.Close()
 
 	// Duration to run the sending process
-	duration := 1 * time.Minute
+	duration := 5 * time.Second
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
@@ -88,15 +104,15 @@ func main() {
 		time.Sleep(500 * time.Millisecond)
 		seq++
 	}
-	print("times up")
-	Close_client_tcpdump(subProcess)
+	print("times up \n")
+	// Close_client_tcpdump(subProcess)
 
 	// Response from server
 	// responseBuf := make([]byte, bufferMaxSize)
 	// ReceiveResponse(stream, responseBuf)
 }
 
-func Start_client_tcpdump(password string) (*exec.Cmd) {
+func Start_client_tcpdump(password string) *exec.Cmd {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
@@ -115,8 +131,8 @@ func Start_client_tcpdump(password string) (*exec.Cmd) {
 
 func Close_client_tcpdump(cmd *exec.Cmd) {
 	quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 }
 
 func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
@@ -131,7 +147,7 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	binary.BigEndian.PutUint32(message[12:16], microsec)
 	message = append(message, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(message[16:20], seq)
-	
+
 	// add random additional data to 250 bytes
 	msgLength := len(message)
 	if msgLength < PACKET_LEN {
