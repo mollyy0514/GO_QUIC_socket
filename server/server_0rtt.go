@@ -7,8 +7,6 @@ package main
 // 	"crypto/tls"
 // 	"crypto/x509"
 // 	"encoding/binary"
-
-// 	// "encoding/json"
 // 	"encoding/pem"
 // 	"os"
 // 	"time"
@@ -54,19 +52,19 @@ package main
 // 		KeepAlivePeriod: time.Minute * 5,
 // 		EnableDatagrams: true,
 // 		Allow0RTT:       true,
-// 		Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
-// 			role := "server"
-// 			if p == logging.PerspectiveClient {
-// 				role = "client"
-// 			}
-// 			filename := fmt.Sprintf("./log_%s_%s.qlog", connID, role)
-// 			f, err := os.Create(filename)
-// 			if err != nil {
-// 				fmt.Println("cannot generate qlog file")
-// 			}
-// 			// handle the error
-// 			return qlog.NewConnectionTracer(f, p, connID)
-// 		},
+// 		// Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
+// 		// 	role := "server"
+// 		// 	if p == logging.PerspectiveClient {
+// 		// 		role = "client"
+// 		// 	}
+// 		// 	filename := fmt.Sprintf("./log_%s_%s.qlog", connID, role)
+// 		// 	f, err := os.Create(filename)
+// 		// 	if err != nil {
+// 		// 		fmt.Println("cannot generate qlog file")
+// 		// 	}
+// 		// 	// handle the error
+// 		// 	return qlog.NewConnectionTracer(f, p, connID)
+// 		// },
 // 	}
 // 	// ListenAddrEarly supports 0rtt
 // 	listener, err := quic.ListenAddrEarly(fmt.Sprintf("%s:%d", host, quicPort), GenerateTLSConfig(), &quicConfig)
@@ -76,8 +74,8 @@ package main
 // 	defer listener.Close()
 
 // 	fmt.Printf("Started QUIC server! %s:%d\n", host, quicPort)
-	
-// 		fmt.Printf("fofo")
+
+// 	for {
 // 		conn, err := listener.Accept(context.Background())
 // 		if err != nil {
 // 			fmt.Println(err)
@@ -93,13 +91,13 @@ package main
 // 		defer stream.Close()
 
 // 		state := conn.ConnectionState()
-// 		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, handshake = %v, TLSresume = %v, proto = %s\n", 
+// 		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, handshake = %v, TLSresume = %v, proto = %s\n",
 // 			conn.RemoteAddr(),
 // 			state.Used0RTT,
 // 			state.TLS.HandshakeComplete,
 // 			state.TLS.DidResume,
 // 			state.TLS.NegotiatedProtocol)
-		
+
 // 		for {
 // 			buf := make([]byte, packet_length)
 // 			ts, err := Server_receive(stream, buf)
@@ -108,20 +106,13 @@ package main
 // 			}
 // 			fmt.Printf("Received: %f\n", ts)
 // 		}
-// 	// }
+// 	}
 
 // }
 
 // func HandleQuicStream(stream quic.Stream) {
 
 // 	seq := 0
-// 	// Open or create a file to store the floats in JSON format
-// 	// timeFile, err := os.OpenFile("./data/timefloats.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-// 	// if err != nil {
-// 	// 	fmt.Println("Error opening file:", err)
-// 	// 	return
-// 	// }
-// 	// defer timeFile.Close()
 // 	for {
 // 		buf := make([]byte, packet_length)
 // 		ts, err := Server_receive(stream, buf)
@@ -130,20 +121,13 @@ package main
 // 		}
 // 		fmt.Printf("Received: %f\n", ts)
 
-// 		// Marshal the float to JSON and append it to the file
-// 		// encoder := json.NewEncoder(timeFile)
-// 		// if err := encoder.Encode(ts); err != nil {
-// 		// 	fmt.Println("Error encoding JSON:", err)
-// 		// 	return
-// 		// }
-
-// 		// sending response to client
-// 		// responseString := "server received!"
-// 		// responseMsg := []byte(responseString)
-// 		// response(stream, responseMsg)
-
 // 		seq += 1
 // 	}
+// 	// written, err := io.Copy(loggingWriter{stream}, stream)
+// 	// if err != nil {
+// 	// 	println(err)
+// 	// }
+// 	// fmt.Printf("written %d", written)
 // }
 
 // func HandleQuicSession(sess quic.Connection) {
@@ -151,16 +135,16 @@ package main
 // 		// create a stream to receive message, and also create a channel for communication
 // 		stream, err := sess.AcceptStream(context.Background())
 // 		if err != nil {
+// 			fmt.Println(err)
 // 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 // 		}
 // 		// print remote address & 0rtt
 // 		state := sess.ConnectionState()
-// 		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, handshake = %v, TLSresume = %v, proto = %s\n",
+// 		log.Printf("Accepted QUIC connection from %v, 0rtt = %v, handshake = %v, TLSresume = %v\n",
 // 			sess.RemoteAddr(),
 // 			state.Used0RTT,
 // 			state.TLS.HandshakeComplete,
-// 			state.TLS.DidResume,
-// 			state.TLS.NegotiatedProtocol)
+// 			state.TLS.DidResume)
 
 // 		go HandleQuicStream(stream)
 // 	}
@@ -172,6 +156,7 @@ package main
 // 		KeepAlivePeriod: time.Minute * 5,
 // 		EnableDatagrams: true,
 // 		Allow0RTT:       true,
+		
 // 		Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
 // 			role := "server"
 // 			if p == logging.PerspectiveClient {
@@ -220,7 +205,6 @@ package main
 // 	}
 // 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 // 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
-
 // 	kl, _ := os.OpenFile("tls_key.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 
 // 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
@@ -233,16 +217,6 @@ package main
 // 		KeyLogWriter: kl,
 // 	}
 // }
-
-// // func pad(bb []byte, size int) []byte {
-// // 	l := len(bb)
-// // 	if l == size {
-// // 		return bb
-// // 	}
-// // 	tmp := make([]byte, size)
-// // 	copy(tmp[size-l:], bb)
-// // 	return tmp
-// // }
 
 // func Start_server_tcpdump() {
 // 	currentTime := time.Now()
@@ -271,11 +245,3 @@ package main
 
 // 	return ts, err
 // }
-
-// // func response(stream quic.Stream, responseMsg []byte) {
-// // 	_, err := stream.Write(responseMsg)
-// // 	if err != nil {
-// // 		panic(err)
-// // 	}
-// // }
-// // }

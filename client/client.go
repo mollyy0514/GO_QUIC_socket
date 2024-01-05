@@ -36,9 +36,9 @@ const PACKET_LEN = 250
 func main() {
 	// set the password for sudo
 	// Retrieve command-line arguments
-	// args := os.Args
+	args := os.Args
 	// Access the argument at index 1 (index 0 is the program name)
-	// password := args[1]
+	password := args[1]
 
 	// set TLS
 	tlsConfig := &tls.Config{
@@ -47,7 +47,7 @@ func main() {
 	}
 
 	// capture packets in client side
-	// subProcess := Start_client_tcpdump(password)
+	subProcess := Start_client_tcpdump(password)
 
 	// add 0rtt to quicConfig
 	quicConfig := quic.Config{
@@ -86,7 +86,7 @@ func main() {
 	defer stream.Close()
 
 	// Duration to run the sending process
-	duration := 5 * time.Second
+	duration := 1 * time.Minute
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
@@ -105,7 +105,7 @@ func main() {
 		seq++
 	}
 	print("times up \n")
-	// Close_client_tcpdump(subProcess)
+	Close_client_tcpdump(subProcess)
 
 	// Response from server
 	// responseBuf := make([]byte, bufferMaxSize)

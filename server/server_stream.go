@@ -40,7 +40,7 @@ func main() {
 	quicPort := flag.Int("quic", PORT, "QUIC port to listen")
 	flag.Parse()
 
-	// Start_server_tcpdump()
+	Start_server_tcpdump()
 
 	go EchoQuicServer(*host, *quicPort)
 	select {}

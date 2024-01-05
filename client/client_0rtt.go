@@ -4,25 +4,22 @@ package main
 // 	"context"
 // 	"crypto/rand"
 // 	"crypto/tls"
+// 	"crypto/x509"
 // 	"encoding/binary"
 // 	"fmt"
+
+// 	// "io"
 // 	"log"
 // 	"os"
-// 	"os/exec"
-// 	"os/signal"
-// 	"syscall"
-// 	// "strings"
 // 	"time"
 
-// 	// "strings"
-// 	// "strconv"
-// 	// "GO_QUIC_socket/android"
 // 	"github.com/quic-go/quic-go"
 // 	"github.com/quic-go/quic-go/logging"
 // 	"github.com/quic-go/quic-go/qlog"
 // )
 
 // const SERVER = "127.0.0.1"
+
 // // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
 // // const SERVER = "192.168.1.78" // wmnlab local IP
 // // const SERVER = "140.112.20.183"  // 249 public IP
@@ -30,25 +27,32 @@ package main
 
 // var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
 
-// // const bufferMaxSize = 1048576          // 1mb
 // const PACKET_LEN = 250
 
 // func main() {
-// 	// set the password for sudo
-// 	// Retrieve command-line arguments
-// 	// args := os.Args
-// 	// Access the argument at index 1 (index 0 is the program name)
-// 	// password := args[1]
+
+// 	pool, err := x509.SystemCertPool()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	// println("pool", pool)
 
 // 	// set TLS
 // 	tlsConfig := &tls.Config{
-// 		InsecureSkipVerify: true,
+// 		InsecureSkipVerify: false,
+// 		RootCAs: pool,
+// 		// KeyLogWriter: keyLog,
 // 		NextProtos:         []string{"h3"},
 // 		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 // 	}
-
-// 	// capture packets in client side
-// 	// subProcess := Start_client_tcpdump(password)
+// 	// var put <-chan struct{}
+// 	// tlsConfig.ClientSessionCache, put = newSessionCache(tls.NewLRUClientSessionCache(1))
+// 	// puts := make(chan string, 100)
+// 	// cache := tlsConfig.ClientSessionCache
+// 	// if cache == nil {
+// 	// 	cache = tls.NewLRUClientSessionCache(100)
+// 	// }
+// 	// tlsConfig.ClientSessionCache = newClientSessionCache(cache, make(chan string, 100), puts)
 
 // 	// add 0rtt to quicConfig
 // 	quicConfig := quic.Config{
@@ -78,9 +82,8 @@ package main
 // 		if err != nil {
 // 			fmt.Println("err: ", err)
 // 		}
-		
 // 		// defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
-		
+
 // 		// create a stream
 // 		// context.Background() is similar to a channel, giving QUIC a way to communicate
 // 		stream, err := session.OpenStreamSync(context.Background())
@@ -88,6 +91,13 @@ package main
 // 			log.Fatal(err)
 // 		}
 // 		// defer stream.Close()
+
+// 		// select {
+// 		// 	case <-time.NewTimer(10 * time.Second).C:
+// 		// 		log.Printf("expected to receive a session ticket within 10 seconds")
+// 		// 	case <-put:
+// 		// 		log.Println("GET session ticket ", put)
+// 		// }
 
 // 		// Duration to run the sending process
 // 		duration := 5 * time.Second
@@ -109,37 +119,15 @@ package main
 // 			seq++
 // 		}
 // 		print("times up \n")
-// 		session.CloseWithError(0, "there is an error!")
+
+// 		state := session.ConnectionState()
+// 		fmt.Printf("[4242 same]i:%d, used0RTT:%v\n", i, state.Used0RTT)
+
 // 		stream.Close()
-// 	}
-// 	// Close_client_tcpdump(subProcess)
+// 		session.CloseWithError(0, "there is an error!")
 
-// 	// Response from server
-// 	// responseBuf := make([]byte, bufferMaxSize)
-// 	// ReceiveResponse(stream, responseBuf)
-// }
-
-// func Start_client_tcpdump(password string) *exec.Cmd {
-// 	currentTime := time.Now()
-// 	y := currentTime.Year()
-// 	m := currentTime.Month()
-// 	d := currentTime.Day()
-// 	filepath := fmt.Sprintf("./data/capturequic_c_%02d%02d%02d.pcap", y, m, d)
-// 	command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, PORT, filepath)
-// 	subProcess := exec.Command("sh", "-c", command)
-
-// 	err := subProcess.Start()
-// 	if err != nil {
-// 		log.Fatal(err)
 // 	}
 
-// 	return subProcess
-// }
-
-// func Close_client_tcpdump(cmd *exec.Cmd) {
-// 	quit := make(chan os.Signal, 1)
-// 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-// 	<-quit
 // }
 
 // func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
@@ -173,12 +161,44 @@ package main
 // 	}
 // }
 
-// // func ReceiveResponse(stream quic.Stream, responseBuf []byte) {
-// // 	size, err := stream.Read(responseBuf)
-// // 	if err != nil {
-// // 		fmt.Println(err)
-// // 		return
+// // type sessionCache struct {
+// // 	tls.ClientSessionCache
+// // 	put chan<- struct{}
+// // }
+// // func newSessionCache(c tls.ClientSessionCache) (tls.ClientSessionCache, <-chan struct{}) {
+// // 	put := make(chan struct{}, 100)
+// // 	return &sessionCache{ClientSessionCache: c, put: put}, put
+// // }
+
+// // func (c *sessionCache) Put(key string, cs *tls.ClientSessionState) {
+// // 	c.ClientSessionCache.Put(key, cs)
+// // 	c.put <- struct{}{}
+// // }
+
+// // type clientSessionCache struct {
+// // 	cache tls.ClientSessionCache
+
+// // 	gets chan<- string
+// // 	puts chan<- string
+// // }
+
+// // func newClientSessionCache(cache tls.ClientSessionCache, gets, puts chan<- string) *clientSessionCache {
+// // 	return &clientSessionCache{
+// // 		cache: cache,
+// // 		gets:  gets,
+// // 		puts:  puts,
 // // 	}
-// // 	fmt.Printf("Received: %s\n", responseBuf[:size])
-// // 	}
+// // }
+
+// // var _ tls.ClientSessionCache = &clientSessionCache{}
+
+// // func (c *clientSessionCache) Get(sessionKey string) (*tls.ClientSessionState, bool) {
+// // 	session, ok := c.cache.Get(sessionKey)
+// // 	c.gets <- sessionKey
+// // 	return session, ok
+// // }
+
+// // func (c *clientSessionCache) Put(sessionKey string, cs *tls.ClientSessionState) {
+// // 	c.cache.Put(sessionKey, cs)
+// // 	c.puts <- sessionKey
 // // }
