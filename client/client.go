@@ -24,8 +24,8 @@ import (
 
 // const SERVER = "127.0.0.1"
 // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
-const SERVER = "192.168.1.78" // wmnlab local IP
-// const SERVER = "140.112.20.183"  // 249 public IP
+// const SERVER = "192.168.1.78" // wmnlab local IP
+const SERVER = "140.112.20.183"  // 249 public IP
 const PORT = 4242
 
 var serverAddr string = fmt.Sprintf("%s:%d", SERVER, PORT)
