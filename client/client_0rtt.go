@@ -25,7 +25,6 @@ import (
 )
 
 const SERVER = "127.0.0.1"
-
 // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
 // const SERVER = "192.168.1.78" // wmnlab local IP
 // const SERVER = "140.112.20.183"  // 249 public IP
@@ -38,12 +37,12 @@ const PACKET_LEN = 250
 func main() {
 	// set the password for sudo
 	// Retrieve command-line arguments
-	args := os.Args
+	// args := os.Args
 	// Access the argument at index 1 (index 0 is the program name)
-	password := args[1]
+	// password := args[1]
 
 	// capture packets in client side
-	subProcess := Start_client_tcpdump(password)
+	// subProcess := Start_client_tcpdump(password)
 
 	// pool, err := x509.SystemCertPool()
 	// if err != nil {
@@ -143,7 +142,7 @@ func main() {
 		session.CloseWithError(0, "there is an error!")
 
 	}
-	Close_client_tcpdump(subProcess)
+	// Close_client_tcpdump(subProcess)
 }
 
 func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
