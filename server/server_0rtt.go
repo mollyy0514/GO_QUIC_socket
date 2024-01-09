@@ -212,7 +212,7 @@ func GenerateTLSConfig() *tls.Config {
 	// }
 	// keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	// certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
-	kl, _ := os.OpenFile("tls_key.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	// kl, _ := os.OpenFile("tls_key.log", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 
 	// tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
 	// if err != nil {
@@ -225,7 +225,7 @@ func GenerateTLSConfig() *tls.Config {
 	return &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 		NextProtos:   []string{"h3"},
-		KeyLogWriter: kl,
+		// KeyLogWriter: kl,
 	}
 }
 
