@@ -9,7 +9,7 @@ import (
 	"encoding/binary"
 	"sync"
 
-	// "encoding/json"
+	"encoding/json"
 	"encoding/pem"
 	"os"
 	"time"
@@ -59,12 +59,20 @@ func main() {
 
 func HandleQuicStream_ul(stream quic.Stream) {
 	// Open or create a file to store the floats in JSON format
-	// timeFile, err := os.OpenFile("./data/timefloats_UL.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	// if err != nil {
-	// 	fmt.Println("Error opening file:", err)
-	// 	return
-	// }
-	// defer timeFile.Close()
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	h := currentTime.Hour()
+	n := currentTime.Minute()
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+	filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.json", date, h, n, PORT_UL)
+	timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer timeFile.Close()
 	for {
 		buf := make([]byte, PACKET_LEN)
 		ts, err := Server_receive(stream, buf)
@@ -74,11 +82,11 @@ func HandleQuicStream_ul(stream quic.Stream) {
 		fmt.Printf("Received: %f\n", ts)
 
 		// Marshal the float to JSON and append it to the file
-		// encoder := json.NewEncoder(timeFile)
-		// if err := encoder.Encode(ts); err != nil {
-		// 	fmt.Println("Error encoding JSON:", err)
-		// 	return
-		// }
+		encoder := json.NewEncoder(timeFile)
+		if err := encoder.Encode(ts); err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return
+		}
 	}
 }
 
@@ -108,6 +116,7 @@ func HandleQuicSession(sess quic.Connection, ul bool) {
 		// create a stream to receive message, and also create a channel for communication
 		stream, err := sess.AcceptStream(context.Background())
 		if err != nil {
+			fmt.Println(err)
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
 		if (ul) {
@@ -131,10 +140,14 @@ func EchoQuicServer(host string, quicPort int, ul bool) error {
 			if p == logging.PerspectiveClient {
 				role = "client"
 			}
-
-			nowHour := nowTime.Hour()
-			nowMinute := nowTime.Minute()
-			filename := fmt.Sprintf("./log_%02d%02d_%d_%s.qlog", nowHour, nowMinute, quicPort, role)
+			currentTime := time.Now()
+			y := currentTime.Year()
+			m := currentTime.Month()
+			d := currentTime.Day()
+			h := currentTime.Hour()
+			n := currentTime.Minute()
+			date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+			filename := fmt.Sprintf("./log_%s_%02d%02d_%d_%s.qlog", date, h, n, quicPort, role)
 			f, err := os.Create(filename)
 			if err != nil {
 				fmt.Println("cannot generate qlog file")
@@ -208,8 +221,10 @@ func Start_server_tcpdump(port int) {
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
+	h := currentTime.Hour()
+	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("../data/capturequic_s_%s_%d.pcap", date, port)
+	filepath := fmt.Sprintf("../data/capturequic_s_%s_%02d%02d_%d.pcap", date, h, n, port)
 	command := fmt.Sprintf("sudo tcpdump -i any port %d -w %s", port, filepath)
 	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Start()
@@ -222,7 +237,7 @@ func Server_receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
-	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
+	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e9
 	if err != nil {
 		return -115, err
 		// fmt.Println(err)
