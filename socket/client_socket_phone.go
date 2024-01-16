@@ -63,8 +63,8 @@ func main() {
 	var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
 	var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 
-	Start_client_tcpdump(portsList[0])
-	Start_client_tcpdump(portsList[1])
+	subp1 := Start_client_tcpdump(portsList[0])
+	subp2 := Start_client_tcpdump(portsList[1])
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 
 	var wg sync.WaitGroup
@@ -96,7 +96,7 @@ func main() {
 
 				Client_send(stream_ul)
 				session_ul.CloseWithError(0, "ul times up")
-				// Close_client_tcpdump(subProcess)
+				Close_tcpdump(subp1)
 			} else {
 				// Start_client_tcpdump(portsList[1])
 				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
@@ -152,6 +152,7 @@ func main() {
 					ts, err := Client_receive(stream_dl, buf)
 					if (ts == -115) {
 						session_dl.CloseWithError(0, "dl times up")
+						Close_tcpdump(subp2)
 					}
 					if err != nil {
 						return
@@ -165,14 +166,14 @@ func main() {
 						return
 					}
 				}
-				// Close_client_tcpdump(subProcess)
+				
 			}
 		}(i)
 	}
 	wg.Wait()
 }
 
-func Start_client_tcpdump(port string) {
+func Start_client_tcpdump(port string) *exec.Cmd {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
@@ -189,7 +190,7 @@ func Start_client_tcpdump(port string) {
 		log.Fatal(err)
 	}
 
-	// return subProcess
+	return subProcess
 }
 
 func GenTlsConfig() *tls.Config {
