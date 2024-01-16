@@ -9,9 +9,14 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
+	"sync"
+
 	// "os"
 	"os/exec"
 	// "os/signal"
@@ -20,6 +25,8 @@ import (
 	"time"
 
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/logging"
+	"github.com/quic-go/quic-go/qlog"
 )
 
 // const SERVER = "127.0.0.1"
@@ -32,9 +39,9 @@ const PACKET_LEN = 250
 // func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
 func main() {
 	// Define command-line flags
-	_host := flag.String("H", "192.168.1.79", "server ip address")
+	_host := flag.String("H", "140.112.20.183", "server ip address")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	_ports := flag.String("p", "3200", "ports to bind (space-separated)")
+	_ports := flag.String("p", "3200,3201", "ports to bind (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	_length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
@@ -45,68 +52,129 @@ func main() {
 	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
 
-	// set TLS
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
-		NextProtos:         []string{"h3"},
+	var PORT_UL int
+	var PORT_DL int
+	if (len(portsList) == 2) {
+		PORT_UL, _ = strconv.Atoi(portsList[0])
+		PORT_DL, _ = strconv.Atoi(portsList[1])
+	} else {
+		fmt.Println("port missing!")
 	}
+	var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
+	var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
-	defer cancel()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	for i := 0; i < 2; i++ {
+		go func(i int) { // capture packets in client side
+			if i == 0 {
+				Start_client_tcpdump(portsList[0])
+				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+				// set generate configs
+				tlsConfig := GenTlsConfig()
+				quicConfig := GenQuicConfig(PORT_UL)
 
-	// capture packets in client side
-	subProcess := Start_tcpdump(portsList)
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
+				defer cancel()
+				// connect to server IP. Session is like the socket of TCP/IP
+				session_ul, err := quic.DialAddr(ctx, serverAddr_ul, tlsConfig, &quicConfig)
+				if err != nil {
+					fmt.Println("err: ", err)
+				}
+				defer session_ul.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
+				// create a stream_ul
+				// context.Background() is similar to a channel, giving QUIC a way to communicate
+				stream_ul, err := session_ul.OpenStreamSync(context.Background())
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer stream_ul.Close()
 
-	// connect to server IP. Session is like the socket of TCP/IP
-	serverAddr := fmt.Sprintf("%s:%s", *_host, portsList[0])
-	fmt.Printf("serverAddr: %s \n", serverAddr)
-	session, err := quic.DialAddr(ctx, serverAddr, tlsConfig, nil)
-	if err != nil {
-		fmt.Print("err: ")
-		fmt.Println(err)
-		return
+				Client_send(stream_ul)
+				session_ul.CloseWithError(0, "ul times up")
+				// Close_client_tcpdump(subProcess)
+			} else {
+				Start_client_tcpdump(portsList[1])
+				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+				// set generate configs
+				tlsConfig := GenTlsConfig()
+				quicConfig := GenQuicConfig(PORT_DL)
+
+				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
+				defer cancel()
+				// connect to server IP. Session is like the socket of TCP/IP
+				session_dl, err := quic.DialAddr(ctx, serverAddr_dl, tlsConfig, &quicConfig)
+				if err != nil {
+					fmt.Println("err: ", err)
+				}
+				defer session_dl.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
+				// create a stream_dl
+				// context.Background() is similar to a channel, giving QUIC a way to communicate
+				stream_dl, err := session_dl.OpenStreamSync(context.Background())
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer stream_dl.Close()
+
+				// Open or create a file to store the floats in JSON format
+				currentTime := time.Now()
+				y := currentTime.Year()
+				m := currentTime.Month()
+				d := currentTime.Day()
+				h := currentTime.Hour()
+				n := currentTime.Minute()
+				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+				filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.json", date, h, n, PORT_UL)
+				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					fmt.Println("Error opening file:", err)
+					return
+				}
+				defer timeFile.Close()
+
+				var message []byte
+				t := time.Now().UnixNano() // Time in milliseconds
+				fmt.Println("client create time: ", t)
+				datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
+				microsec := uint32(t % 1e9)    // Extract remaining microseconds
+				message = append(message, make([]byte, 4)...)
+				binary.BigEndian.PutUint32(message[:4], datetimedec)
+				message = append(message, make([]byte, 4)...)
+				binary.BigEndian.PutUint32(message[4:8], microsec)
+				SendPacket(stream_dl, message)
+
+				for {
+					buf := make([]byte, PACKET_LEN)
+					ts, err := Client_receive(stream_dl, buf)
+					if (ts == -115) {
+						session_dl.CloseWithError(0, "dl times up")
+					}
+					if err != nil {
+						return
+					}
+					fmt.Printf("client received: %f\n", ts)
+
+					// Marshal the float to JSON and append it to the file
+					encoder := json.NewEncoder(timeFile)
+					if err := encoder.Encode(ts); err != nil {
+						fmt.Println("Error encoding JSON:", err)
+						return
+					}
+				}
+				// Close_client_tcpdump(subProcess)
+			}
+		}(i)
 	}
-	fmt.Print("dialed \n")
-	defer session.CloseWithError(quic.ApplicationErrorCode(501), "hi you have an error")
-
-	// create a stream
-	// context.Background() is similar to a channel, giving QUIC a way to communicate
-	stream, err := session.OpenStreamSync(context.Background())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer stream.Close()
-
-	// Duration to run the sending process
-	duration := 5 * time.Second
-	seq := 1
-	start_time := time.Now()
-	euler := 271828
-	pi := 31415926
-	for time.Since(start_time) <= time.Duration(duration) {
-
-		t := time.Now().UnixNano() // Time in milliseconds
-		print(t, "\n")
-		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
-		microsec := uint32(t % 1e9)    // Extract remaining microseconds
-
-		// var message []byte
-		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
-		Transmit(stream, message)
-		time.Sleep(500 * time.Millisecond)
-		seq++
-	}
-	print("times up")
-	Close_tcpdump(subProcess)
+	wg.Wait()
 }
 
-func Start_tcpdump(portsList []string) *exec.Cmd {
+func Start_client_tcpdump(port string) *exec.Cmd {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
 	d := currentTime.Day()
-	filepath := fmt.Sprintf("/sdcard/pcapdir/ul_c_%02d%02d%02d_%s.pcap", y, m, d, portsList[0])
-	command := fmt.Sprintf("su -c tcpdump port %s -w %s", portsList[0], filepath)
+	filepath := fmt.Sprintf("/sdcard/pcapdir/ul_c_%02d%02d%02d_%s.pcap", y, m, d, port)
+	command := fmt.Sprintf("su -c tcpdump port %s -w %s", port, filepath)
 	subProcess := exec.Command("sh", "-c", command)
 	err := subProcess.Start()
 	fmt.Printf("file created! \n")
@@ -115,6 +183,40 @@ func Start_tcpdump(portsList []string) *exec.Cmd {
 	}
 
 	return subProcess
+}
+
+func GenTlsConfig() *tls.Config {
+	// set TLS
+	return &tls.Config{
+		InsecureSkipVerify: true,
+		NextProtos:         []string{"h3"},
+	}
+}
+
+func GenQuicConfig(port int) quic.Config {
+	return quic.Config{
+		Allow0RTT: true,
+		Tracer: func(ctx context.Context, p logging.Perspective, connID quic.ConnectionID) *logging.ConnectionTracer {
+			role := "server"
+			if p == logging.PerspectiveClient {
+				role = "client"
+			}
+			currentTime := time.Now()
+			y := currentTime.Year()
+			m := currentTime.Month()
+			d := currentTime.Day()
+			h := currentTime.Hour()
+			n := currentTime.Minute()
+			date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+			filename := fmt.Sprintf("./log_%s_%02d%02d_%d_%s.qlog", date, h, n, port, role)
+			f, err := os.Create(filename)
+			if err != nil {
+				fmt.Println("cannot generate qlog file")
+			}
+			// handle the error
+			return qlog.NewConnectionTracer(f, p, connID)
+		},
+	}
 }
 
 func Close_tcpdump(cmd *exec.Cmd) {
@@ -148,9 +250,49 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	return message
 }
 
-func Transmit(stream quic.Stream, message []byte) {
+func SendPacket(stream quic.Stream, message []byte) {
 	_, err := stream.Write(message)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func Client_send(stream quic.Stream) {
+	// Duration to run the sending process
+	duration := 5 * time.Second
+	seq := 1
+	start_time := time.Now()
+	euler := 271828
+	pi := 31415926
+	for time.Since(start_time) <= time.Duration(duration) {
+		// for {
+		t := time.Now().UnixNano() // Time in milliseconds
+		fmt.Println("client sent: ", t)
+		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
+		microsec := uint32(t % 1e9)    // Extract remaining microseconds
+
+		// var message []byte
+		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
+		SendPacket(stream, message)
+		time.Sleep(500 * time.Millisecond)
+		seq++
+	}
+}
+
+func Client_receive(stream quic.Stream, buf []byte) (float64, error) {
+	_, err := stream.Read(buf)
+	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
+	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
+	var ts float64
+	if (tsSeconds == 115 && tsMicroseconds == 115) {
+		return -115, err
+	} else {
+		ts = float64(tsSeconds) + float64(tsMicroseconds)/1e9
+	}
+
+	if err != nil {
+		return -1103, err
+	}
+
+	return ts, err
 }

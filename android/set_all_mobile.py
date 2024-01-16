@@ -20,16 +20,16 @@ serial_to_device = {
 }
 
 device_to_port = {
-    "sm00": [3200, 3201],
-    "sm01": [3202, 3203],
-    "sm02": (3204, 3205),
-    "sm03": (3206, 3207),
-    "sm04": (3208, 3209),
-    "sm05": (3210, 3211),
-    "sm06": (3212, 3213),
-    "sm07": (3214, 3215),
-    "sm08": (3216, 3217),
-    "sm09": (3218, 3219),
+    "sm00": [4200, 4201],
+    "sm01": [4202, 4203],
+    "sm02": [4204, 4205],
+    "sm03": [4206, 4207],
+    "sm04": [4208, 4209],
+    "sm05": [4210, 4211],
+    "sm06": [4212, 4213],
+    "sm07": [4214, 4215],
+    "sm08": [4216, 4217],
+    "sm09": [4218, 4219],
 }
 
 devices_info = []
@@ -81,7 +81,8 @@ for device, info in zip(devices, devices_info):
 
 for info in devices_info:
     print(info[0], info[2], "\n")
-    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {device_to_port[info[2]][0]}'
+    portString = f"{device_to_port[info[2]][0]},{device_to_port[info[2]][1]}"
+    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
     # procs.append(p)

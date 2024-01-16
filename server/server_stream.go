@@ -90,14 +90,14 @@ func HandleQuicStream_ul(stream quic.Stream) {
 	}
 }
 
-func HandleQuicSession_dl(stream quic.Stream) {
-	// duration := 1 * time.Minute
+func HandleQuicStream_dl(stream quic.Stream) {
+	duration := 5 * time.Second
 	seq := 1
-	// start_time := time.Now()
+	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	// for time.Since(start_time) <= time.Duration(duration) {
-	for {
+	for time.Since(start_time) <= time.Duration(duration) {
+	// for {
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("server sent:", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
@@ -109,6 +109,9 @@ func HandleQuicSession_dl(stream quic.Stream) {
 		time.Sleep(500 * time.Millisecond)
 		seq++
 	}
+	// the last packet to tell client to close the session
+	message := Create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))
+	Transmit(stream, message)
 }
 
 func HandleQuicSession(sess quic.Connection, ul bool) {
@@ -122,7 +125,7 @@ func HandleQuicSession(sess quic.Connection, ul bool) {
 		if (ul) {
 			go HandleQuicStream_ul(stream)
 		} else {
-			go HandleQuicSession_dl(stream)
+			go HandleQuicStream_dl(stream)
 		}
 	}
 }

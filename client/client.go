@@ -36,18 +36,7 @@ var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
 
-func cleanup() {
-	fmt.Println("clean it up")
-}
-
 func main() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		cleanup()
-		os.Exit(1)
-	}()
 	// set the password for sudo
 	// Retrieve command-line arguments
 	args := os.Args
@@ -82,6 +71,7 @@ func main() {
 				defer stream_ul.Close()
 
 				Client_send(stream_ul)
+				session_ul.CloseWithError(0, "ul times up")
 				// Close_client_tcpdump(subProcess)
 			} else {
 				Start_client_tcpdump(password, PORT_DL)
@@ -136,6 +126,9 @@ func main() {
 				for {
 					buf := make([]byte, PACKET_LEN)
 					ts, err := Client_receive(stream_dl, buf)
+					if (ts == -115) {
+						session_dl.CloseWithError(0, "dl times up")
+					}
 					if err != nil {
 						return
 					}
@@ -272,10 +265,16 @@ func Client_receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
-	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e9
-	if err != nil {
+	var ts float64
+	if (tsSeconds == 115 && tsMicroseconds == 115) {
 		return -115, err
-		// fmt.Println(err)
+	} else {
+		ts = float64(tsSeconds) + float64(tsMicroseconds)/1e9
 	}
+
+	if err != nil {
+		return -1103, err
+	}
+
 	return ts, err
 }
