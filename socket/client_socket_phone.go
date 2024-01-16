@@ -63,13 +63,17 @@ func main() {
 	var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
 	var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 
+	Start_client_tcpdump(portsList[0])
+	Start_client_tcpdump(portsList[1])
+	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
 			if i == 0 {
-				Start_client_tcpdump(portsList[0])
-				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+				// Start_client_tcpdump(portsList[0])
+				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_UL)
@@ -94,8 +98,8 @@ func main() {
 				session_ul.CloseWithError(0, "ul times up")
 				// Close_client_tcpdump(subProcess)
 			} else {
-				Start_client_tcpdump(portsList[1])
-				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+				// Start_client_tcpdump(portsList[1])
+				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_DL)

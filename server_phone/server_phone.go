@@ -86,7 +86,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
 }
 
 func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
-	duration := 1 * time.Minute
+	duration := 5 * time.Second
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
@@ -263,7 +263,7 @@ func Receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
-	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e10
+	ts := float64(tsSeconds) + float64(tsMicroseconds)/1e9
 	if err != nil {
 		return -115, err
 		// fmt.Println(err)
