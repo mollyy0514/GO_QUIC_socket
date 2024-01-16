@@ -172,7 +172,7 @@ func main() {
 	wg.Wait()
 }
 
-func Start_client_tcpdump(port string) *exec.Cmd {
+func Start_client_tcpdump(port string) {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
@@ -189,7 +189,7 @@ func Start_client_tcpdump(port string) *exec.Cmd {
 		log.Fatal(err)
 	}
 
-	return subProcess
+	// return subProcess
 }
 
 func GenTlsConfig() *tls.Config {
