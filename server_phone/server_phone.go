@@ -186,7 +186,14 @@ func generateTLSConfig(quicPort int) *tls.Config {
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)})
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
-	keyFileName := fmt.Sprintf("./data/tls_key_%02d.log", quicPort)
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	h := currentTime.Hour()
+	n := currentTime.Minute()
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+	keyFileName := fmt.Sprintf("./data/tls_key_%s_%02d%02d_%02d.log", date, h, n, quicPort)
 	kl, _ := os.OpenFile(keyFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
