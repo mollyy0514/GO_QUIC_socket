@@ -282,7 +282,7 @@ func Client_send(stream quic.Stream) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendPacket(stream, message)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(2 * time.Millisecond)
 		seq++
 	}
 }

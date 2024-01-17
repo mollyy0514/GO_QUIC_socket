@@ -101,7 +101,7 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		Transmit(stream, message)
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(2 * time.Millisecond)
 		seq++
 	}
 	message := Create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))
