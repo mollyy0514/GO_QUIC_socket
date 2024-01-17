@@ -267,7 +267,7 @@ func SendPacket(stream quic.Stream, message []byte) {
 
 func Client_send(stream quic.Stream) {
 	// Duration to run the sending process
-	duration := 5 * time.Second
+	duration := 450 * time.Second
 	seq := 1
 	start_time := time.Now()
 	euler := 271828

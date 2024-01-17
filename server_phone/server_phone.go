@@ -86,7 +86,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
 }
 
 func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
-	duration := 5 * time.Second
+	duration := 450 * time.Second
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
