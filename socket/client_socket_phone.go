@@ -128,7 +128,7 @@ func main() {
 				h := currentTime.Hour()
 				n := currentTime.Minute()
 				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-				filepath := fmt.Sprintf("/sdcard/pcapdir/time_%s_%02d%02d_%d.json", date, h, n, PORT_UL)
+				filepath := fmt.Sprintf("/sdcard/pcapdir/time_%s_%02d%02d_%d.json", date, h, n, PORT_DL)
 				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println("Error opening file:", err)

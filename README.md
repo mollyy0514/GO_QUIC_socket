@@ -68,6 +68,22 @@ git clone https://<pat>@github.com/mollyy0514/GO_QUIC_socket.git
 - Update phone serials
 - Test 2 phones
 
+**1228**:
+- 0-rtt implementation
+
+**0111**:
+- Add dl
+- Mobile phone experiment program
+
+**0118**:
+- Analyze experiment data
+    - MobileInsight file
+    - .qlog to .json
+- Will out-of-order occur in QUIC?
+    - Since QUIC is build on top of UDP, out-of-order won't lead to HOL blocking.
+- What's bytes-in-flight?
+    - The bytes that have been sent but not yet ACKed, if the cwnd = 64k & bytes-in-flight = 48k, then it can only be sent 16k more before the rwnd is filled.
+
 ## Descrption
 Comparison:
 - Stream Socket:

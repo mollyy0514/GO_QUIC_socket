@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
+	"encoding/json"
 	"encoding/pem"
 	"flag"
 	"fmt"
@@ -73,7 +74,22 @@ func main() {
 }
 
 func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
-	seq := 0
+	// Open or create a file to store the floats in JSON format
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	h := currentTime.Hour()
+	n := currentTime.Minute()
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+	filepath := fmt.Sprintf("./data/time_%s_%02d%02d_%d.json", date, h, n, quicPort)
+	timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return
+	}
+	defer timeFile.Close()
+
 	for {
 		buf := make([]byte, PACKET_LEN)
 		ts, err := Receive(stream, buf)
@@ -81,7 +97,13 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
 			return
 		}
 		fmt.Printf("Received %d: %f\n", quicPort, ts)
-		seq += 1
+
+		// Marshal the float to JSON and append it to the file
+		encoder := json.NewEncoder(timeFile)
+		if err := encoder.Encode(ts); err != nil {
+			fmt.Println("Error encoding JSON:", err)
+			return
+		}
 	}
 }
 
@@ -92,7 +114,7 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
 	euler := 271828
 	pi := 31415926
 	for time.Since(start_time) <= time.Duration(duration) {
-	// for {
+		// for {
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("server sent:", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
@@ -117,7 +139,7 @@ func HandleQuicSession(sess quic.Connection, quicPort int, ul bool) {
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
 
-		if (ul) {
+		if ul {
 			go HandleQuicStream_ul(stream, quicPort)
 		} else {
 			go HandleQuicStream_dl(stream, quicPort)
