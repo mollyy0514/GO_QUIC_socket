@@ -3,6 +3,7 @@
 from adbutils import adb
 import os
 import subprocess
+import argparse
 
 serial_to_device = {
     "R5CR20FDXHK":"sm00",
@@ -31,6 +32,11 @@ device_to_port = {
     "sm08": [4216, 4217],
     "sm09": [4218, 4219],
 }
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--time", type=int,
+                    help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=3600)
+args = parser.parse_args()
 
 devices_info = []
 for i, info in enumerate(adb.list()):
@@ -82,7 +88,7 @@ for device, info in zip(devices, devices_info):
 for info in devices_info:
     print(info[0], info[2], "\n")
     portString = f"{device_to_port[info[2]][0]},{device_to_port[info[2]][1]}"
-    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString}'
+    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString} {args.time}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
     # procs.append(p)
