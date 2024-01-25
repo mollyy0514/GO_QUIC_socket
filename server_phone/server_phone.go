@@ -29,6 +29,7 @@ import (
 
 const PACKET_LEN = 250
 const SERVER = "0.0.0.0"
+const SLEEPTIME = 2
 
 func main() {
 
@@ -41,10 +42,10 @@ func main() {
 
 	// Define command-line flags
 	_password := flag.String("p", "", "password")
-	_devices := flag.String("d", "sm00-01", "list of devices (space-separated)")
+	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
 	// _bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	// _length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
-	// _duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
+	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	flag.Parse()
 	// set the password for sudo
 
@@ -57,6 +58,8 @@ func main() {
 	// }
 	print("deviceCnt: ", len(portsList), "\n")
 
+	duration := *_duration
+
 	for i := 0; i < len(portsList); i++ {
 		Start_tcpdump(*_password, portsList[i][0])
 		Start_tcpdump(*_password, portsList[i][1])
@@ -67,13 +70,13 @@ func main() {
 		wg.Add(2)
 		defer wg.Done()
 
-		go EchoQuicServer(SERVER, portsList[i][0], true)
-		go EchoQuicServer(SERVER, portsList[i][1], false)
+		go EchoQuicServer(SERVER, portsList[i][0], true, duration)
+		go EchoQuicServer(SERVER, portsList[i][1], false, duration)
 	}
 	wg.Wait()
 }
 
-func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
+func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 	// Open or create a file to store the floats in JSON format
 	currentTime := time.Now()
 	y := currentTime.Year()
@@ -107,15 +110,18 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int) {
 	}
 }
 
-func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
-	duration := 450 * time.Second
+func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	for time.Since(start_time) <= time.Duration(duration) {
-		// for {
-		t := time.Now().UnixNano() // Time in milliseconds
+	next_transmission_time := start_time.UnixMilli()
+	for time.Since(start_time) <= time.Second * time.Duration(duration) {
+		for time.Now().UnixMilli() < next_transmission_time {
+			// t = time.Now().UnixNano()
+		}
+		t := time.Now().UnixNano()
+		next_transmission_time += SLEEPTIME
 		fmt.Println("server sent:", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
@@ -123,14 +129,14 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		Transmit(stream, message)
-		time.Sleep(2 * time.Millisecond)
+		// time.Sleep(2 * time.Millisecond)
 		seq++
 	}
 	message := Create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))
 	Transmit(stream, message)
 }
 
-func HandleQuicSession(sess quic.Connection, quicPort int, ul bool) {
+func HandleQuicSession(sess quic.Connection, quicPort int, ul bool, duration int) {
 	for {
 		// create a stream to receive message, and also create a channel for communication
 		stream, err := sess.AcceptStream(context.Background())
@@ -140,15 +146,15 @@ func HandleQuicSession(sess quic.Connection, quicPort int, ul bool) {
 		}
 
 		if ul {
-			go HandleQuicStream_ul(stream, quicPort)
+			go HandleQuicStream_ul(stream, quicPort, duration)
 		} else {
-			go HandleQuicStream_dl(stream, quicPort)
+			go HandleQuicStream_dl(stream, quicPort, duration)
 		}
 	}
 }
 
 // Start a server that echos all data on top of QUIC
-func EchoQuicServer(host string, quicPort int, ul bool) error {
+func EchoQuicServer(host string, quicPort int, ul bool, duration int) error {
 	quicConfig := quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
 		EnableDatagrams: true,
@@ -190,7 +196,7 @@ func EchoQuicServer(host string, quicPort int, ul bool) error {
 			return err
 		}
 
-		go HandleQuicSession(sess, quicPort, ul)
+		go HandleQuicSession(sess, quicPort, ul, duration)
 	}
 }
 

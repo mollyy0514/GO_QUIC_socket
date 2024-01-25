@@ -35,6 +35,7 @@ const SERVER = "140.112.20.183"
 
 // const bufferMaxSize = 1048576          // 1mb
 const PACKET_LEN = 250
+const SLEEPTIME = 2
 
 // func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
 func main() {
@@ -44,13 +45,15 @@ func main() {
 	_ports := flag.String("p", "3200,3201", "ports to bind (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	_length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
-	_duration := flag.Int("t", 3600, "time in seconds to transmit for (default 1 hour = 3600 secs)")
+	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	// Parse command-line arguments
 	flag.Parse()
 	fmt.Printf("info %s %s %s %s %s %d \n", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration)
 
 	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
+	
+	duration := *_duration
 
 	var PORT_UL int
 	var PORT_DL int
@@ -94,7 +97,7 @@ func main() {
 				}
 				defer stream_ul.Close()
 
-				Client_send(stream_ul)
+				Client_send(stream_ul, duration)
 				session_ul.CloseWithError(0, "ul times up")
 				Close_tcpdump(subp1)
 			} else {
@@ -265,15 +268,17 @@ func SendPacket(stream quic.Stream, message []byte) {
 	}
 }
 
-func Client_send(stream quic.Stream) {
-	// Duration to run the sending process
-	duration := 450 * time.Second
+func Client_send(stream quic.Stream, duration int) {
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	for time.Since(start_time) <= time.Duration(duration) {
-		// for {
+	next_transmission_time := start_time.UnixMilli()
+	for time.Since(start_time) <= time.Second * time.Duration(duration) {
+		for time.Now().UnixMilli() < next_transmission_time {
+			// t = time.Now().UnixNano()
+		}
+		next_transmission_time += SLEEPTIME
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("client sent: ", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
