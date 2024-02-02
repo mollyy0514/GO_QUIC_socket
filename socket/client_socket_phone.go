@@ -74,9 +74,7 @@ func main() {
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
-			if i == 0 {
-				// Start_client_tcpdump(portsList[0])
-				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+			if i == 0 {		// UPLINK
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_UL)
@@ -98,11 +96,10 @@ func main() {
 				defer stream_ul.Close()
 
 				Client_send(stream_ul, duration)
+				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
 				Close_tcpdump(subp1)
-			} else {
-				// Start_client_tcpdump(portsList[1])
-				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+			} else {	// DOWNLINK
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_DL)
@@ -148,7 +145,7 @@ func main() {
 				binary.BigEndian.PutUint32(message[:4], datetimedec)
 				message = append(message, make([]byte, 4)...)
 				binary.BigEndian.PutUint32(message[4:8], microsec)
-				SendPacket(stream_dl, message)
+				SendStartPacket(stream_dl, message)
 
 				for {
 					buf := make([]byte, PACKET_LEN)
@@ -261,7 +258,7 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	return message
 }
 
-func SendPacket(stream quic.Stream, message []byte) {
+func SendStartPacket(stream quic.Stream, message []byte) {
 	_, err := stream.Write(message)
 	if err != nil {
 		log.Fatal(err)
@@ -286,7 +283,7 @@ func Client_send(stream quic.Stream, duration int) {
 
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
-		SendPacket(stream, message)
+		SendStartPacket(stream, message)
 		time.Sleep(2 * time.Millisecond)
 		seq++
 	}

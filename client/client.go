@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -23,10 +22,10 @@ import (
 	"github.com/quic-go/quic-go/qlog"
 )
 
-// const SERVER = "127.0.0.1"
+const SERVER = "127.0.0.1"
 // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
 // const SERVER = "192.168.1.78" // wmnlab local IP
-const SERVER = "140.112.20.183" // 249 public IP
+// const SERVER = "140.112.20.183" // 249 public IP
 const PORT_UL = 4242
 const PORT_DL = 4243
 
@@ -37,18 +36,18 @@ var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 const PACKET_LEN = 250
 
 func main() {
-	// set the password for sudo
-	// Retrieve command-line arguments
-	args := os.Args
-	// Access the argument at index 1 (index 0 is the program name)
-	password := args[1]
+	// // set the password for sudo
+	// // Retrieve command-line arguments
+	// args := os.Args
+	// // Access the argument at index 1 (index 0 is the program name)
+	// password := args[1]
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
 			if i == 0 {
-				Start_client_tcpdump(password, PORT_UL)
+				// Start_client_tcpdump(password, PORT_UL)
 				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
@@ -74,7 +73,7 @@ func main() {
 				session_ul.CloseWithError(0, "ul times up")
 				// Close_client_tcpdump(subProcess)
 			} else {
-				Start_client_tcpdump(password, PORT_DL)
+				// Start_client_tcpdump(password, PORT_DL)
 				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
@@ -104,7 +103,7 @@ func main() {
 				h := currentTime.Hour()
 				n := currentTime.Minute()
 				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-				filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.json", date, h, n, PORT_UL)
+				filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.txt", date, h, n, PORT_DL)
 				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println("Error opening file:", err)
@@ -134,10 +133,10 @@ func main() {
 					}
 					fmt.Printf("client received: %f\n", ts)
 
-					// Marshal the float to JSON and append it to the file
-					encoder := json.NewEncoder(timeFile)
-					if err := encoder.Encode(ts); err != nil {
-						fmt.Println("Error encoding JSON:", err)
+					// Write the timestamp as a string to the text file
+					_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
+					if err != nil {
+						fmt.Println("Error writing to file:", err)
 						return
 					}
 				}
@@ -222,11 +221,30 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	binary.BigEndian.PutUint32(message[16:20], seq)
 
 	// add random additional data to 250 bytes
-	msgLength := len(message)
-	if msgLength < PACKET_LEN {
-		randomBytes := make([]byte, PACKET_LEN-msgLength)
-		rand.Read(randomBytes)
-		message = append(message, randomBytes...)
+	// msgLength := len(message)
+	// if msgLength < PACKET_LEN {
+	// 	randomBytes := make([]byte, PACKET_LEN-msgLength)
+	// 	rand.Read(randomBytes)
+	// 	message = append(message, randomBytes...)
+	// }
+
+	// TESTING
+	if seq == 2 {
+		fmt.Println("2 needs 500!")
+		msgLength := len(message)
+		if msgLength < 500 {
+			randomBytes := make([]byte, 500-msgLength)
+			rand.Read(randomBytes)
+			message = append(message, randomBytes...)
+		}
+		fmt.Println(len(message))
+	} else {
+		msgLength := len(message)
+		if msgLength < PACKET_LEN {
+			randomBytes := make([]byte, PACKET_LEN-msgLength)
+			rand.Read(randomBytes)
+			message = append(message, randomBytes...)
+		}
 	}
 
 	return message

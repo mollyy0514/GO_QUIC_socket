@@ -7,11 +7,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"sync"
-
-	"encoding/json"
 	"encoding/pem"
 	"os"
+	"sync"
 	"time"
 
 	// "errors"
@@ -28,7 +26,7 @@ import (
 )
 
 // const bufferMaxSize = 1048576 // 1mb
-const PACKET_LEN = 250
+const PACKET_LEN = 500
 const SERVER = "0.0.0.0"
 const PORT_UL = 4242
 const PORT_DL = 4243
@@ -66,13 +64,14 @@ func HandleQuicStream_ul(stream quic.Stream) {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.json", date, h, n, PORT_UL)
+	filepath := fmt.Sprintf("../data/time_%s_%02d%02d_%d.txt", date, h, n, PORT_UL)
 	timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
 	}
 	defer timeFile.Close()
+	fmt.Printf("startstart\n")
 	for {
 		buf := make([]byte, PACKET_LEN)
 		ts, err := Server_receive(stream, buf)
@@ -81,10 +80,10 @@ func HandleQuicStream_ul(stream quic.Stream) {
 		}
 		fmt.Printf("Received: %f\n", ts)
 
-		// Marshal the float to JSON and append it to the file
-		encoder := json.NewEncoder(timeFile)
-		if err := encoder.Encode(ts); err != nil {
-			fmt.Println("Error encoding JSON:", err)
+		// Write the timestamp as a string to the text file
+		_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
+		if err != nil {
+			fmt.Println("Error writing to file:", err)
 			return
 		}
 	}
@@ -97,7 +96,7 @@ func HandleQuicStream_dl(stream quic.Stream) {
 	euler := 271828
 	pi := 31415926
 	for time.Since(start_time) <= time.Duration(duration) {
-	// for {
+		// for {
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("server sent:", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
@@ -122,7 +121,7 @@ func HandleQuicSession(sess quic.Connection, ul bool) {
 			fmt.Println(err)
 			return // Using panic here will terminate the program if a new connection has not come in in a while, such as transmitting large file.
 		}
-		if (ul) {
+		if ul {
 			go HandleQuicStream_ul(stream)
 		} else {
 			go HandleQuicStream_dl(stream)
@@ -132,7 +131,7 @@ func HandleQuicSession(sess quic.Connection, ul bool) {
 
 // Start a server that echos all data on top of QUIC
 func EchoQuicServer(host string, quicPort int, ul bool) error {
-	Start_server_tcpdump(quicPort)
+	// Start_server_tcpdump(quicPort)
 	nowTime := time.Now()
 	quicConfig := quic.Config{
 		KeepAlivePeriod: time.Minute * 5,
