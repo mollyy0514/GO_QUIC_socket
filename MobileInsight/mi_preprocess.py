@@ -13,19 +13,19 @@ from mobile_insight.monitor import OfflineReplayer
 from mobile_insight.analyzer import MsgLogger, NrRrcAnalyzer, LteRrcAnalyzer, WcdmaRrcAnalyzer, LteNasAnalyzer, UmtsNasAnalyzer, LteMacAnalyzer, LtePhyAnalyzer, LteMeasurementAnalyzer
 
 # ******************************* User Settings *******************************
-database = "/home/wmnlab/Desktop/"
+database = "/media/wmnlab/1DBE-7367/MOXA/"
 dates = [
-         "2024-01-17",
+         "2024-02-03",
 ]
 devices = sorted([
     "sm00",
-    "sm01",
 ])
 exps = {  # experiment_name: (number_of_experiment_rounds, list_of_experiment_round)
             # If the list is None, it will not list as directories.
             # If the list is empty, it will list all directories in the current directory by default.
             # If the number of experiment times != the length of existing directories of list, it would trigger warning and skip the directory.
-    "pm": (2, ["#{:02d}".format(i+1) for i in range(2)]),
+    "QUIC-450sec": (6, ["#{:02d}".format(i+1) for i in range(6)]),
+    "QUIC-300sec": (6, ["#{:02d}".format(i+1) for i in range(6)]),
 }
 # *****************************************************************************
 
