@@ -86,7 +86,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("./data/time_%s_%02d%02d_%d.json", date, h, n, quicPort)
+	filepath := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/time_file/time_%s_%02d%02d_%d.json", date, h, n, quicPort)
 	timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -172,7 +172,7 @@ func EchoQuicServer(host string, quicPort int, ul bool, duration int) error {
 			h := currentTime.Hour()
 			n := currentTime.Minute()
 			date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-			filename := fmt.Sprintf("./log_%s_%02d%02d_%d_%s.qlog", date, h, n, quicPort, role)
+			filename := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/server_qlog/log_%s_%02d%02d_%d_%s.qlog", date, h, n, quicPort, role)
 			f, err := os.Create(filename)
 			if err != nil {
 				fmt.Println("cannot generate qlog file")
@@ -222,7 +222,7 @@ func generateTLSConfig(quicPort int) *tls.Config {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	keyFileName := fmt.Sprintf("./data/tls_key_%s_%02d%02d_%02d.log", date, h, n, quicPort)
+	keyFileName := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/tls_key/tls_key_%s_%02d%02d_%02d.log", date, h, n, quicPort)
 	kl, _ := os.OpenFile(keyFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 
 	tlsCert, err := tls.X509KeyPair(certPEM, keyPEM)
@@ -244,7 +244,7 @@ func Start_tcpdump(password string, port int) {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("./data/capturequic_s_%s_%02d%02d_%d.pcap", date, h, n, port)
+	filepath := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/server_pcap/capturequic_s_%s_%02d%02d_%d.pcap", date, h, n, port)
 	command := fmt.Sprintf("echo %s | sudo -S tcpdump port %d -w %s", password, port, filepath)
 	cmd := exec.Command("sh", "-c", command)
 	err := cmd.Start()
