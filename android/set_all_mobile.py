@@ -35,7 +35,7 @@ device_to_port = {
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--time", type=int,
-                    help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=3600)
+                    help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=300)
 args = parser.parse_args()
 
 devices_info = []

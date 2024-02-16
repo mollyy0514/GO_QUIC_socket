@@ -42,7 +42,7 @@ func main() {
 	// Define command-line flags
 	_host := flag.String("H", "140.112.20.183", "server ip address")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	_ports := flag.String("p", "3200,3201", "ports to bind (space-separated)")
+	_ports := flag.String("p", "4200,4201", "ports to bind (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	_length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
@@ -66,9 +66,11 @@ func main() {
 	var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
 	var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 
-	subp1 := Start_client_tcpdump(portsList[0])
-	subp2 := Start_client_tcpdump(portsList[1])
-	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+	/* ---------- TCPDUMP ---------- */
+	// subp1 := Start_client_tcpdump(portsList[0])
+	// subp2 := Start_client_tcpdump(portsList[1])
+	// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+	/* ---------- TCPDUMP ---------- */
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -98,7 +100,9 @@ func main() {
 				Client_send(stream_ul, duration)
 				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
-				Close_tcpdump(subp1)
+				/* ---------- TCPDUMP ---------- */
+				// Close_tcpdump(subp1)
+				/* ---------- TCPDUMP ---------- */
 			} else {	// DOWNLINK
 				// set generate configs
 				tlsConfig := GenTlsConfig()
@@ -152,7 +156,9 @@ func main() {
 					ts, err := Client_receive(stream_dl, buf)
 					if (ts == -115) {
 						session_dl.CloseWithError(0, "dl times up")
-						Close_tcpdump(subp2)
+						/* ---------- TCPDUMP ---------- */
+						// Close_tcpdump(subp2)
+						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {
 						return
@@ -284,7 +290,7 @@ func Client_send(stream quic.Stream, duration int) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendStartPacket(stream, message)
-		time.Sleep(2 * time.Millisecond)
+		// time.Sleep(2 * time.Millisecond)
 		seq++
 	}
 }

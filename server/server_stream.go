@@ -26,10 +26,11 @@ import (
 )
 
 // const bufferMaxSize = 1048576 // 1mb
-const PACKET_LEN = 500
+const PACKET_LEN = 250
 const SERVER = "0.0.0.0"
 const PORT_UL = 4242
 const PORT_DL = 4243
+const SLEEPTIME = 2
 
 // We start a server echoing data on the first stream the client opens,
 // then connect with a client, send the message, and wait for its receipt.
@@ -95,8 +96,10 @@ func HandleQuicStream_dl(stream quic.Stream) {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
+	next_transmission_time := start_time.UnixMilli()
 	for time.Since(start_time) <= time.Duration(duration) {
-		// for {
+		for time.Now().UnixMilli() < next_transmission_time {}
+		next_transmission_time += SLEEPTIME
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("server sent:", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
@@ -105,7 +108,7 @@ func HandleQuicStream_dl(stream quic.Stream) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		Transmit(stream, message)
-		time.Sleep(500 * time.Millisecond)
+		// time.Sleep(500 * time.Millisecond)
 		seq++
 	}
 	// the last packet to tell client to close the session

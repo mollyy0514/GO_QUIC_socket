@@ -28,6 +28,7 @@ const SERVER = "127.0.0.1"
 // const SERVER = "140.112.20.183" // 249 public IP
 const PORT_UL = 4242
 const PORT_DL = 4243
+const SLEEPTIME = 2
 
 var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
 var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
@@ -264,8 +265,10 @@ func Client_send(stream quic.Stream) {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
+	next_transmission_time := start_time.UnixMilli()
 	for time.Since(start_time) <= time.Duration(duration) {
-		// for {
+		for time.Now().UnixMilli() < next_transmission_time {}
+		next_transmission_time += SLEEPTIME
 		t := time.Now().UnixNano() // Time in milliseconds
 		fmt.Println("client sent: ", t)
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
@@ -274,7 +277,7 @@ func Client_send(stream quic.Stream) {
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendPacket(stream, message)
-		time.Sleep(500 * time.Millisecond)
+		// time.Sleep(500 * time.Millisecond)
 		seq++
 	}
 }
