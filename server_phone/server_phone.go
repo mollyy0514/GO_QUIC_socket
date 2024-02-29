@@ -27,9 +27,10 @@ import (
 	"github.com/quic-go/quic-go/qlog"
 )
 
-const PACKET_LEN = 250
 const SERVER = "0.0.0.0"
-const SLEEPTIME = 2
+var BITRATE int
+var PACKET_LEN int
+var SLEEPTIME int64
 
 func main() {
 
@@ -43,8 +44,8 @@ func main() {
 	// Define command-line flags
 	// _password := flag.String("p", "", "password")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	// _bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
-	// _length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
+	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
+	_length := flag.Int("l", 250, "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	flag.Parse()
 	
@@ -57,6 +58,22 @@ func main() {
 	// }
 	print("deviceCnt: ", len(portsList), "\n")
 	duration := *_duration
+	PACKET_LEN = *_length
+	bitrate_string := *_bitrate
+	
+	num, unit := bitrate_string[:len(bitrate_string)-1], bitrate_string[len(bitrate_string)-1:]
+	if unit == "k" {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal * 1e3)
+	} else if unit == "M" {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal * 1e6)
+	} else {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal)
+	}
+	expected_packet_per_sec := BITRATE / (PACKET_LEN << 3)
+	SLEEPTIME = 1000 / int64(expected_packet_per_sec)
 
 	/* ---------- TCPDUMP ---------- */
 	// for i := 0; i < len(portsList); i++ {
@@ -94,13 +111,22 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 	}
 	defer timeFile.Close()
 
+	prev_receive := 0
+	time_slot := 1
+	seq := 1
 	for {
 		buf := make([]byte, PACKET_LEN)
 		ts, err := Receive(stream, buf)
+		seq++
 		if err != nil {
 			return
 		}
-		fmt.Printf("Received %d: %f\n", quicPort, ts)
+		// fmt.Printf("Received %d: %f\n", quicPort, ts)
+		if time.Since(currentTime) <= time.Second * time.Duration(time_slot) {
+			fmt.Printf("%d [%d-%d] receive %d", quicPort, time_slot-1, time_slot, seq-prev_receive)
+			time_slot += 1
+			prev_receive = seq
+		}
 
 		// Marshal the float to JSON and append it to the file
 		encoder := json.NewEncoder(timeFile)
@@ -112,6 +138,8 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 }
 
 func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
+	prev_transmit := 0
+	time_slot := 1
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
@@ -123,14 +151,19 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 		}
 		t := time.Now().UnixNano()
 		next_transmission_time += SLEEPTIME
-		fmt.Println("server sent:", t)
+		// fmt.Println("server sent:", t)	// print out the time that sent to client in every packet
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		Transmit(stream, message)
-		// time.Sleep(2 * time.Millisecond)
+		
+		if time.Since(start_time) <= time.Second * time.Duration(time_slot) {
+			fmt.Printf("[%d-%d] transmit %d", time_slot-1, time_slot, seq-prev_transmit)
+            time_slot += 1
+            prev_transmit = seq
+		}
 		seq++
 	}
 	message := Create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))

@@ -34,8 +34,10 @@ import (
 const SERVER = "140.112.20.183"
 
 // const bufferMaxSize = 1048576          // 1mb
-const PACKET_LEN = 250
-const SLEEPTIME = 2
+
+var BITRATE int
+var PACKET_LEN int
+var SLEEPTIME int64
 
 // func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
 func main() {
@@ -44,17 +46,15 @@ func main() {
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
 	_ports := flag.String("p", "4200,4201", "ports to bind (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
-	_length := flag.String("l", "250", "length of buffer to read or write in bytes (packet size)")
+	_length := flag.Int("l", 250, "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	// Parse command-line arguments
 	flag.Parse()
-	fmt.Printf("info %s %s %s %s %s %d \n", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration)
+	fmt.Printf("info %s %s %s %s %d %d \n", *_host, *_devices, *_ports, *_bitrate, *_length, *_duration)
 
+	duration := *_duration
 	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
-	
-	duration := *_duration
-
 	var PORT_UL int
 	var PORT_DL int
 	if (len(portsList) == 2) {
@@ -65,6 +65,23 @@ func main() {
 	}
 	var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
 	var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
+
+	PACKET_LEN = *_length
+	bitrate_string := *_bitrate
+	
+	num, unit := bitrate_string[:len(bitrate_string)-1], bitrate_string[len(bitrate_string)-1:]
+	if unit == "k" {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal * 1e3)
+	} else if unit == "M" {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal * 1e6)
+	} else {
+		numVal, _ := strconv.ParseFloat(num, 64)
+		BITRATE = int(numVal)
+	}
+	expected_packet_per_sec := BITRATE / (PACKET_LEN << 3)
+	SLEEPTIME = 1000 / int64(expected_packet_per_sec)
 
 	/* ---------- TCPDUMP ---------- */
 	// subp1 := Start_client_tcpdump(portsList[0])
@@ -151,9 +168,13 @@ func main() {
 				binary.BigEndian.PutUint32(message[4:8], microsec)
 				SendStartPacket(stream_dl, message)
 
+				prev_receive := 0
+				time_slot := 1
+				seq := 1
 				for {
 					buf := make([]byte, PACKET_LEN)
 					ts, err := Client_receive(stream_dl, buf)
+					seq++
 					if (ts == -115) {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
@@ -163,7 +184,12 @@ func main() {
 					if err != nil {
 						return
 					}
-					fmt.Printf("client received: %f\n", ts)
+					// fmt.Printf("client received: %f\n", ts)
+					if time.Since(currentTime) <= time.Second * time.Duration(time_slot) {
+						fmt.Printf("[%d-%d] receive %d", time_slot-1, time_slot, seq-prev_receive)
+						time_slot += 1
+						prev_receive = seq
+					}
 
 					// Marshal the float to JSON and append it to the file
 					encoder := json.NewEncoder(timeFile)
@@ -272,6 +298,8 @@ func SendStartPacket(stream quic.Stream, message []byte) {
 }
 
 func Client_send(stream quic.Stream, duration int) {
+	prev_transmit := 0
+	time_slot := 1
 	seq := 1
 	start_time := time.Now()
 	euler := 271828
@@ -283,14 +311,19 @@ func Client_send(stream quic.Stream, duration int) {
 		}
 		next_transmission_time += SLEEPTIME
 		t := time.Now().UnixNano() // Time in milliseconds
-		fmt.Println("client sent: ", t)
+		// fmt.Println("client sent: ", t)	// print out the time that sent to server in every packet
 		datetimedec := uint32(t / 1e9) // Extract seconds from milliseconds
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendStartPacket(stream, message)
-		// time.Sleep(2 * time.Millisecond)
+		
+		if time.Since(start_time) <= time.Second * time.Duration(time_slot) {
+			fmt.Printf("[%d-%d] transmit %d", time_slot-1, time_slot, seq-prev_transmit)
+            time_slot += 1
+            prev_transmit = seq
+		}
 		seq++
 	}
 }

@@ -36,6 +36,10 @@ device_to_port = {
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--time", type=int,
                     help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=300)
+parser.add_argument("-b", "--bitrate", type=str,
+                    help="target bitrate in bits/sec (0 for unlimited)", default="1M")
+parser.add_argument("-l", "--length", type=int,
+                    help="length of buffer to read or write in bytes (packet size)", default=250)
 args = parser.parse_args()
 
 devices_info = []
@@ -88,7 +92,7 @@ for device, info in zip(devices, devices_info):
 for info in devices_info:
     print(info[0], info[2], "\n")
     portString = f"{device_to_port[info[2]][0]},{device_to_port[info[2]][1]}"
-    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString} {args.time}'
+    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString} {args.time} {args.bitrate} {args.length}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
     # procs.append(p)
