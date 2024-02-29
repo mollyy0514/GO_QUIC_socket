@@ -185,7 +185,7 @@ func main() {
 						return
 					}
 					// fmt.Printf("client received: %f\n", ts)
-					if time.Since(currentTime) <= time.Second * time.Duration(time_slot) {
+					if time.Since(currentTime) > time.Second * time.Duration(time_slot) {
 						fmt.Printf("[%d-%d] receive %d", time_slot-1, time_slot, seq-prev_receive)
 						time_slot += 1
 						prev_receive = seq
@@ -319,7 +319,7 @@ func Client_send(stream quic.Stream, duration int) {
 		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendStartPacket(stream, message)
 		
-		if time.Since(start_time) <= time.Second * time.Duration(time_slot) {
+		if time.Since(start_time) > time.Second * time.Duration(time_slot) {
 			fmt.Printf("[%d-%d] transmit %d", time_slot-1, time_slot, seq-prev_transmit)
             time_slot += 1
             prev_transmit = seq
