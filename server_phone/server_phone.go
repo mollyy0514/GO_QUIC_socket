@@ -123,7 +123,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 		}
 		// fmt.Printf("Received %d: %f\n", quicPort, ts)
 		if time.Since(currentTime) > time.Second * time.Duration(time_slot) {
-			fmt.Printf("%d [%d-%d] receive %d", quicPort, time_slot-1, time_slot, seq-prev_receive)
+			fmt.Printf("%d [%d-%d] receive %d\n", quicPort, time_slot-1, time_slot, seq-prev_receive)
 			time_slot += 1
 			prev_receive = seq
 		}
@@ -160,7 +160,7 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 		Transmit(stream, message)
 		
 		if time.Since(start_time) > time.Second * time.Duration(time_slot) {
-			fmt.Printf("[%d-%d] transmit %d", time_slot-1, time_slot, seq-prev_transmit)
+			fmt.Printf("%d [%d-%d] transmit %d\n", quicPort, time_slot-1, time_slot, seq-prev_transmit)
             time_slot += 1
             prev_transmit = seq
 		}

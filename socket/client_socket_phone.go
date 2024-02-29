@@ -38,6 +38,8 @@ const SERVER = "140.112.20.183"
 var BITRATE int
 var PACKET_LEN int
 var SLEEPTIME int64
+var PORT_UL int
+var PORT_DL int
 
 // func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
 func main() {
@@ -55,8 +57,7 @@ func main() {
 	duration := *_duration
 	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
-	var PORT_UL int
-	var PORT_DL int
+	
 	if (len(portsList) == 2) {
 		PORT_UL, _ = strconv.Atoi(portsList[0])
 		PORT_DL, _ = strconv.Atoi(portsList[1])
@@ -186,7 +187,7 @@ func main() {
 					}
 					// fmt.Printf("client received: %f\n", ts)
 					if time.Since(currentTime) > time.Second * time.Duration(time_slot) {
-						fmt.Printf("[%d-%d] receive %d", time_slot-1, time_slot, seq-prev_receive)
+						fmt.Printf("%d [%d-%d] receive %d\n", PORT_DL, time_slot-1, time_slot, seq-prev_receive)
 						time_slot += 1
 						prev_receive = seq
 					}
@@ -320,7 +321,7 @@ func Client_send(stream quic.Stream, duration int) {
 		SendStartPacket(stream, message)
 		
 		if time.Since(start_time) > time.Second * time.Duration(time_slot) {
-			fmt.Printf("[%d-%d] transmit %d", time_slot-1, time_slot, seq-prev_transmit)
+			fmt.Printf("%d [%d-%d] transmit %d\n", PORT_UL, time_slot-1, time_slot, seq-prev_transmit)
             time_slot += 1
             prev_transmit = seq
 		}
