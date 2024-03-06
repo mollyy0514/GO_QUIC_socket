@@ -180,8 +180,6 @@ func main() {
 					ts, err := Client_receive(stream_dl, buf)
 					seq++
 					if (ts == -115) {
-						// vwrite the last packet data into timefile before the session is closed.
-						_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
 						// Close_tcpdump(subp2)

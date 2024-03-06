@@ -8,6 +8,7 @@ import subprocess
 # sys.path.insert(1, '/path/to/application/app/folder')
 from device_to_port import device_to_port
 from device_to_serial import device_to_serial
+from adbutils import adb
 
 #=================argument parsing======================
 parser = argparse.ArgumentParser()
@@ -61,16 +62,22 @@ print(devices)
 print(serials)
 print(ports)
 
-#=================other variables========================
+devices_adb = []
+for device, serial in zip(devices, serials):
+    devices_adb.append(adb.device(serial))
+print(devices_adb)
+
+#=================other variables====================
 HOST = args.host # Lab 249
 bitrate = args.bitrate
 length = args.length
 total_time = args.time
 
 #=================start sockets=======================
-for device, port, serial in zip(devices, ports, serials):
+for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials):
     print(device, serial, "\n")
     portString = f"{port[0]},{port[1]}"
+    device_adb.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
     su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {device} {portString} {total_time} {bitrate} {length}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
