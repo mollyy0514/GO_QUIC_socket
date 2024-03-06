@@ -9,7 +9,6 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"encoding/binary"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -37,7 +36,7 @@ const SERVER = "140.112.20.183"
 
 var BITRATE int
 var PACKET_LEN int
-var SLEEPTIME int64
+var SLEEPTIME float64
 var PORT_UL int
 var PORT_DL int
 
@@ -81,8 +80,12 @@ func main() {
 		numVal, _ := strconv.ParseFloat(num, 64)
 		BITRATE = int(numVal)
 	}
-	expected_packet_per_sec := BITRATE / (PACKET_LEN << 3)
-	SLEEPTIME = 1000 / int64(expected_packet_per_sec)
+	if BITRATE != 0 {
+		expected_packet_per_sec := float64(BITRATE) / (float64(PACKET_LEN) * 8)
+		SLEEPTIME = 1000 / expected_packet_per_sec
+	} else {
+		SLEEPTIME = 0
+	}
 
 	/* ---------- TCPDUMP ---------- */
 	// subp1 := Start_client_tcpdump(portsList[0])
@@ -150,7 +153,7 @@ func main() {
 				h := currentTime.Hour()
 				n := currentTime.Minute()
 				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-				filepath := fmt.Sprintf("/sdcard/pcapdir/time_%s_%02d%02d_%d.json", date, h, n, PORT_DL)
+				filepath := fmt.Sprintf("/sdcard/pcapdir/time_%s_%02d%02d_%d.txt", date, h, n, PORT_DL)
 				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println("Error opening file:", err)
@@ -177,6 +180,8 @@ func main() {
 					ts, err := Client_receive(stream_dl, buf)
 					seq++
 					if (ts == -115) {
+						// vwrite the last packet data into timefile before the session is closed.
+						_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
 						// Close_tcpdump(subp2)
@@ -192,10 +197,10 @@ func main() {
 						prev_receive = seq
 					}
 
-					// Marshal the float to JSON and append it to the file
-					encoder := json.NewEncoder(timeFile)
-					if err := encoder.Encode(ts); err != nil {
-						fmt.Println("Error encoding JSON:", err)
+					// Write the timestamp as a string to the text file
+					_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
+					if err != nil {
+						fmt.Println("Error writing to file:", err)
 						return
 					}
 				}
@@ -260,14 +265,14 @@ func GenQuicConfig(port int) quic.Config {
 	}
 }
 
-func Close_tcpdump(cmd *exec.Cmd) {
+func Close_client_tcpdump(cmd *exec.Cmd) {
 	// quit := make(chan os.Signal, 1)
 	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	// <-quit
 	fmt.Print(cmd)
 }
 
-func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
+func Client_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
 	var message []byte
 	message = append(message, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(message[:4], euler)
@@ -305,9 +310,9 @@ func Client_send(stream quic.Stream, duration int) {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	next_transmission_time := start_time.UnixMilli()
+	next_transmission_time := float64(start_time.UnixNano()) / 1e6
 	for time.Since(start_time) <= time.Second * time.Duration(duration) {
-		for time.Now().UnixMilli() < next_transmission_time {
+		for float64(time.Now().UnixNano())/1e6 < next_transmission_time {
 			// t = time.Now().UnixNano()
 		}
 		next_transmission_time += SLEEPTIME
@@ -317,7 +322,7 @@ func Client_send(stream quic.Stream, duration int) {
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
-		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
+		message := Client_create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendStartPacket(stream, message)
 		
 		if time.Since(start_time) > time.Second * time.Duration(time_slot) {

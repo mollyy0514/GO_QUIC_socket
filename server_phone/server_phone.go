@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/binary"
-	"encoding/json"
 	"encoding/pem"
 	"flag"
 	"fmt"
@@ -30,7 +29,7 @@ import (
 const SERVER = "0.0.0.0"
 var BITRATE int
 var PACKET_LEN int
-var SLEEPTIME int64
+var SLEEPTIME float64
 
 func main() {
 
@@ -72,8 +71,12 @@ func main() {
 		numVal, _ := strconv.ParseFloat(num, 64)
 		BITRATE = int(numVal)
 	}
-	expected_packet_per_sec := BITRATE / (PACKET_LEN << 3)
-	SLEEPTIME = 1000 / int64(expected_packet_per_sec)
+	if BITRATE != 0 {
+		expected_packet_per_sec := float64(BITRATE) / (float64(PACKET_LEN) * 8)
+		SLEEPTIME = 1000 / expected_packet_per_sec
+	} else {
+		SLEEPTIME = 0
+	}
 
 	/* ---------- TCPDUMP ---------- */
 	// for i := 0; i < len(portsList); i++ {
@@ -103,7 +106,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/time_file/time_%s_%02d%02d_%d.json", date, h, n, quicPort)
+	filepath := fmt.Sprintf("/home/wmnlab/temp/QUIC_temp/time_file/time_%s_%02d%02d_%d.txt", date, h, n, quicPort)
 	timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		fmt.Println("Error opening file:", err)
@@ -116,7 +119,7 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 	seq := 1
 	for {
 		buf := make([]byte, PACKET_LEN)
-		ts, err := Receive(stream, buf)
+		ts, err := Server_receive(stream, buf)
 		seq++
 		if err != nil {
 			return
@@ -128,10 +131,10 @@ func HandleQuicStream_ul(stream quic.Stream, quicPort int, duration int) {
 			prev_receive = seq
 		}
 
-		// Marshal the float to JSON and append it to the file
-		encoder := json.NewEncoder(timeFile)
-		if err := encoder.Encode(ts); err != nil {
-			fmt.Println("Error encoding JSON:", err)
+		// Write the timestamp as a string to the text file
+		_, err = timeFile.WriteString(fmt.Sprintf("%f\n", ts))
+		if err != nil {
+			fmt.Println("Error writing to file:", err)
 			return
 		}
 	}
@@ -144,9 +147,9 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 	start_time := time.Now()
 	euler := 271828
 	pi := 31415926
-	next_transmission_time := start_time.UnixMilli()
+	next_transmission_time := float64(start_time.UnixNano()) / 1e6
 	for time.Since(start_time) <= time.Second * time.Duration(duration) {
-		for time.Now().UnixMilli() < next_transmission_time {
+		for float64(time.Now().UnixNano())/1e6 < next_transmission_time {
 			// t = time.Now().UnixNano()
 		}
 		t := time.Now().UnixNano()
@@ -156,8 +159,8 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 		microsec := uint32(t % 1e9)    // Extract remaining microseconds
 
 		// var message []byte
-		message := Create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
-		Transmit(stream, message)
+		message := Server_create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
+		Server_transmit(stream, message)
 		
 		if time.Since(start_time) > time.Second * time.Duration(time_slot) {
 			fmt.Printf("%d [%d-%d] transmit %d\n", quicPort, time_slot-1, time_slot, seq-prev_transmit)
@@ -166,8 +169,8 @@ func HandleQuicStream_dl(stream quic.Stream, quicPort int, duration int) {
 		}
 		seq++
 	}
-	message := Create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))
-	Transmit(stream, message)
+	message := Server_create_packet(uint32(euler), uint32(pi), 115, 115, uint32(seq))
+	Server_transmit(stream, message)
 }
 
 func HandleQuicSession(sess quic.Connection, quicPort int, ul bool, duration int) {
@@ -269,7 +272,7 @@ func generateTLSConfig(quicPort int) *tls.Config {
 	}
 }
 
-func Start_tcpdump(password string, port int) {
+func Start_server_tcpdump(password string, port int) {
 	currentTime := time.Now()
 	y := currentTime.Year()
 	m := currentTime.Month()
@@ -321,7 +324,7 @@ func Get_Port(devicesList []string) [][2]int {
 	return portsList
 }
 
-func Receive(stream quic.Stream, buf []byte) (float64, error) {
+func Server_receive(stream quic.Stream, buf []byte) (float64, error) {
 	_, err := stream.Read(buf)
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
@@ -333,7 +336,7 @@ func Receive(stream quic.Stream, buf []byte) (float64, error) {
 	return ts, err
 }
 
-func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
+func Server_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
 	var message []byte
 	message = append(message, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(message[:4], euler)
@@ -357,7 +360,7 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	return message
 }
 
-func Transmit(stream quic.Stream, message []byte) {
+func Server_transmit(stream quic.Stream, message []byte) {
 	_, err := stream.Write(message)
 	if err != nil {
 		log.Fatal(err)
