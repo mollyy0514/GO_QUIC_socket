@@ -28,8 +28,8 @@ package main
 // // const bufferMaxSize = 1048576 // 1mb
 // const PACKET_LEN = 250
 // const SERVER = "0.0.0.0"
-// const PORT_UL = 4242
-// const PORT_DL = 4243
+// const PORT_UL = 4200
+// const PORT_DL = 4201
 // const SLEEPTIME = 2
 
 // // We start a server echoing data on the first stream the client opens,

@@ -22,12 +22,12 @@ package main
 // 	"github.com/quic-go/quic-go/qlog"
 // )
 
-// const SERVER = "127.0.0.1"
+// // const SERVER = "127.0.0.1"
 // // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
 // // const SERVER = "192.168.1.78" // wmnlab local IP
-// // const SERVER = "140.112.20.183" // 249 public IP
-// const PORT_UL = 4242
-// const PORT_DL = 4243
+// const SERVER = "140.112.20.183" // 249 public IP
+// const PORT_UL = 4200
+// const PORT_DL = 4201
 // const SLEEPTIME = 2
 
 // var serverAddr_ul string = fmt.Sprintf("%s:%d", SERVER, PORT_UL)
@@ -49,7 +49,7 @@ package main
 // 		go func(i int) { // capture packets in client side
 // 			if i == 0 {
 // 				// Start_client_tcpdump(password, PORT_UL)
-// 				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+// 				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 // 				// set generate configs
 // 				tlsConfig := GenTlsConfig()
 // 				quicConfig := GenQuicConfig(PORT_UL)
@@ -75,7 +75,7 @@ package main
 // 				// Close_client_tcpdump(subProcess)
 // 			} else {
 // 				// Start_client_tcpdump(password, PORT_DL)
-// 				time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+// 				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 // 				// set generate configs
 // 				tlsConfig := GenTlsConfig()
 // 				quicConfig := GenQuicConfig(PORT_DL)
@@ -126,7 +126,7 @@ package main
 // 				for {
 // 					buf := make([]byte, PACKET_LEN)
 // 					ts, err := Client_receive(stream_dl, buf)
-// 					if (ts == -115) {
+// 					if ts == -115 {
 // 						session_dl.CloseWithError(0, "dl times up")
 // 					}
 // 					if err != nil {
@@ -267,7 +267,8 @@ package main
 // 	pi := 31415926
 // 	next_transmission_time := start_time.UnixMilli()
 // 	for time.Since(start_time) <= time.Duration(duration) {
-// 		for time.Now().UnixMilli() < next_transmission_time {}
+// 		for time.Now().UnixMilli() < next_transmission_time {
+// 		}
 // 		next_transmission_time += SLEEPTIME
 // 		t := time.Now().UnixNano() // Time in milliseconds
 // 		fmt.Println("client sent: ", t)
@@ -287,7 +288,7 @@ package main
 // 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 // 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
 // 	var ts float64
-// 	if (tsSeconds == 115 && tsMicroseconds == 115) {
+// 	if tsSeconds == 115 && tsMicroseconds == 115 {
 // 		return -115, err
 // 	} else {
 // 		ts = float64(tsSeconds) + float64(tsMicroseconds)/1e9

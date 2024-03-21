@@ -79,3 +79,6 @@
 
 **0306**:
 - Write a file upload socket.
+
+**0318**:
+- Use self-signed CA to avoid tls_key file, and check whether it can be decrypted by Wireshark
