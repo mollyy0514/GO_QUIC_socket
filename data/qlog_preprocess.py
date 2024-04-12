@@ -262,6 +262,7 @@ for date in dates:
             print("TOTAL UL/DL PAIRS CNT:", len(find_pairs))
             ##### ---------- GET QLOG FILE ---------- #####
             for pair in find_pairs:
+                print("NOW:", pair)
                 ##### ---------- TRANSFORM QLOG ---------- #####
                 time = pair[2]
                 port = pair[3]
@@ -320,7 +321,7 @@ for date in dates:
                 received_df["timestamp"] = timestamps_gmt8
 
 
-                ## Add RealTime to CSV
+                ## Add RealTimeStamp to CSV
                 new_csv_order = ['time', 'epoch_time', 'timestamp', 'name', 'data']
                 sent_df = sent_df[new_csv_order]
                 received_df = received_df[new_csv_order]
