@@ -6,6 +6,7 @@ import statistics
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+from pytictoc import TicToc
 
 ##### ---------- USER SETTINGS ---------- #####
 database = "/Volumes/mollyT7/MOXA/"
@@ -15,14 +16,12 @@ exp_names = {
     "QUIC-inf": (6, ["#{:02d}".format(i + 1) for i in range(6)]),
     }
 device_names = ["sm00", "sm01"]
-num_experiments = 6
 
 device_to_port = {"sm00": [5200, 5201], 
                   "sm01": [5202, 5203],
                   "sm02": [5204, 5205]}
 num_devices = len(device_names)
 
-TIME = ""
 ##### ---------- USER SETTINGS ---------- #####
 
 
@@ -319,6 +318,15 @@ for date in dates:
                 received_df["epoch_time"] = epoch_times_gmt8
                 timestamps_gmt8 = pd.to_datetime(epoch_times_gmt8, unit='ms').dt.strftime('%Y-%m-%d %H:%M:%S.%f')
                 received_df["timestamp"] = timestamps_gmt8
+
+
+                ## Add RealTime to CSV
+                new_csv_order = ['time', 'epoch_time', 'timestamp', 'name', 'data']
+                sent_df = sent_df[new_csv_order]
+                received_df = received_df[new_csv_order]
+
+                sent_df.to_csv(sent_csv_file, index=False)
+                received_df.to_csv(received_csv_file, index=False)
                 ##### ---------- SYNC TIME TO SERVER TIME ---------- #####
 
                 ##### ---------- PARSE THE DATA TYPE ---------- #####
@@ -485,6 +493,9 @@ for date in dates:
                 ##### ---------- MAPPING ACK: "packet_number", "offset", "length" ---------- #####
 
                 ##### ---------- MAPPING ACK: "smoothed_rtt", "latest_rtt", "congestion_window", "rtt_variance" ---------- #####
+                print("Start parsing RTT info")
+                t = TicToc()
+                t.tic()
                 pk_sent_rows['smoothed_rtt'] = np.nan
                 pk_sent_rows['latest_rtt'] = np.nan
                 pk_sent_rows['rtt_variance'] = np.nan
@@ -492,6 +503,7 @@ for date in dates:
 
                 # Apply the custom update function to each row in rcv_ack_rows
                 rcv_ack_rows.apply(update_pk_sent_rows, axis=1)
+                t.toc("parsing RTT info took")
                 ##### ---------- MAPPING ACK: "smoothed_rtt", "latest_rtt", "congestion_window", "rtt_variance" ---------- #####
 
                 ##### ---------- IDENTIFY LOST PACKETS ---------- #####

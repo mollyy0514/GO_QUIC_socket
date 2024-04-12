@@ -3,7 +3,7 @@ import shutil
 
 ##### VARIABLES SETTING #####
 root_dir = "/Volumes/mollyT7/MOXA/"
-dates = ["2024-03-21"]
+dates = ["2024-04-11"]
 exp_names = ["QUIC-inf"]
 device_names = ["sm00", "sm01"]
 num_experiments = 6

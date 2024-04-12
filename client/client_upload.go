@@ -29,7 +29,7 @@ const PACKET_LEN = 250
 
 func main() {
 	_host := flag.String("h", "127.0.0.1", "server ip")
-	_port := flag.Int("p", 4242, "server upload port")
+	_port := flag.Int("p", 4200, "server upload port")
 	_file := flag.String("f", "input.txt", "the file name that we need to transfer")
 	flag.Parse()
 	SERVER = *_host

@@ -5,10 +5,10 @@ import time
 
 def pcap_to_csv(infilepath, outfilepath):
     # TCP
-    # s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e _ws.col.Protocol "\
-    #     "-e frame.len -e tcp.analysis.acks_frame -e tcp.seq_raw -e tcp.len -e tcp.analysis.ack_rtt -e tcp.srcport "\
-    #     "-e tcp.dstport -e tcp.analysis.bytes_in_flight -e tcp.analysis.retransmission -e tcp.analysis.fast_retransmission "\
-    #     f"-e tcp.analysis.out_of_order -E header=y -E separator=@ >{outfilepath}"
+    s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e _ws.col.Protocol "\
+        "-e frame.len -e tcp.analysis.acks_frame -e tcp.seq_raw -e tcp.len -e tcp.analysis.ack_rtt -e tcp.srcport "\
+        "-e tcp.dstport -e tcp.analysis.bytes_in_flight -e tcp.analysis.retransmission -e tcp.analysis.fast_retransmission "\
+        f"-e tcp.analysis.out_of_order -E header=y -E separator=@ >{outfilepath}"
     
     # UDP
     # s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e frame.len \
@@ -17,11 +17,11 @@ def pcap_to_csv(infilepath, outfilepath):
     #     -E header=y -E separator=@ > {outfilepath}"
     
     # QUIC
-    s = f"tshark -r {infilepath} -T fields -e frame.number -e quic.packet_number -e frame.time -e frame.time_epoch -e frame.len \
-         -e quic.frame_type -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
-        -e udp.length -e udp.srcport -e udp.dstport -e udp.payload -e quic.stream_data -e _ws.col.Info \
-        -e quic.ack.largest_acknowledged -e quic.ack.ack_delay \
-        -E header=y -E separator=@ > {outfilepath}"
+    # s = f"tshark -r {infilepath} -T fields -e frame.number -e quic.packet_number -e frame.time -e frame.time_epoch -e frame.len \
+    #      -e quic.frame_type -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
+    #     -e udp.length -e udp.srcport -e udp.dstport -e udp.payload -e quic.stream_data -e _ws.col.Info \
+    #     -e quic.ack.largest_acknowledged -e quic.ack.ack_delay \
+    #     -E header=y -E separator=@ > {outfilepath}"
     
     print(s)
     subprocess.Popen([s], shell=True)
@@ -40,7 +40,8 @@ if os.path.isdir(sys.argv[1]):
 
 elif sys.argv[1].endswith(".pcap"):
 
-    fname = "./data/"+sys.argv[1]
+    # fname = "./data/"+sys.argv[1]
+    fname = "/Volumes/mollyT7/lab1/filtered/" + sys.argv[1]
     pcap_to_csv(fname, os.path.join(fname[:fname.find(".pcap")]+"_pcap.csv"))
 
 else:
