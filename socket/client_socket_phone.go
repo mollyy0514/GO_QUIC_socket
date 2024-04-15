@@ -252,7 +252,7 @@ func GenQuicConfig(port int) quic.Config {
 			h := currentTime.Hour()
 			n := currentTime.Minute()
 			date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-			filename := fmt.Sprintf("/sdcard/pcapdir/log_%s_%02d%02d_%d_%s.qlog", date, h, n, port, role)
+			filename := fmt.Sprintf("/sdcard/experiment_log/log_%s_%02d%02d_%d_%s.qlog", date, h, n, port, role)
 			f, err := os.Create(filename)
 			if err != nil {
 				fmt.Println("cannot generate qlog file")
