@@ -41,12 +41,16 @@ func main() {
 	fmt.Println("Starting server...")
 
 	// Define command-line flags
-	// _password := flag.String("p", "", "password")
+	_password := flag.String("p", "", "password")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	_length := flag.Int("l", 250, "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	flag.Parse()
+	if *_password == "" {
+		fmt.Print("Please enter password for tcpdump.")
+		os.Exit(1)
+	}
 	
 	_devices_string := *_devices
 	devicesList := Get_devices(_devices_string)
@@ -79,10 +83,10 @@ func main() {
 	}
 
 	/* ---------- TCPDUMP ---------- */
-	// for i := 0; i < len(portsList); i++ {
-	// 	Start_tcpdump(*_password, portsList[i][0])
-	// 	Start_tcpdump(*_password, portsList[i][1])
-	// }
+	for i := 0; i < len(portsList); i++ {
+		Start_server_tcpdump(*_password, portsList[i][0])
+		Start_server_tcpdump(*_password, portsList[i][1])
+	}
 	/* ---------- TCPDUMP ---------- */
 	
 	// Sync between goroutines.

@@ -45,7 +45,7 @@ func main() {
 	// Define command-line flags
 	_host := flag.String("H", "140.112.20.183", "server ip address")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	_ports := flag.String("p", "4200,4201", "ports to bind (space-separated)")
+	_ports := flag.String("p", "5200,5201", "ports to bind (space-separated)")
 	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
 	_length := flag.Int("l", 250, "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
@@ -88,9 +88,9 @@ func main() {
 	}
 
 	/* ---------- TCPDUMP ---------- */
-	// subp1 := Start_client_tcpdump(portsList[0])
-	// subp2 := Start_client_tcpdump(portsList[1])
-	// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
+	subp1 := Start_client_tcpdump(portsList[0])
+	subp2 := Start_client_tcpdump(portsList[1])
+	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
 
 	var wg sync.WaitGroup
@@ -122,7 +122,7 @@ func main() {
 				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
-				// Close_tcpdump(subp1)
+				Close_client_tcpdump(subp1)
 				/* ---------- TCPDUMP ---------- */
 			} else {	// DOWNLINK
 				// set generate configs
@@ -182,7 +182,7 @@ func main() {
 					if (ts == -115) {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
-						// Close_tcpdump(subp2)
+						Close_client_tcpdump(subp2)
 						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {

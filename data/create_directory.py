@@ -18,6 +18,7 @@ udp_exp_names = [exp_name for exp_name in exp_names if "UDP" in exp_name]
 def create_directory_structure(root_dir, exp_name, device_names, num_devices, num_experiments):
     for device in device_names:
             device_dir = os.path.join(root_dir, exp_name, device)
+            print(device_dir)
             os.makedirs(device_dir, exist_ok=True)
             for i in range(1, num_experiments + 1):
                 exp_dir = os.path.join(device_dir, f"#{i:02d}")
