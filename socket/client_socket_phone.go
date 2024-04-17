@@ -153,7 +153,7 @@ func main() {
 				h := currentTime.Hour()
 				n := currentTime.Minute()
 				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-				filepath := fmt.Sprintf("/sdcard/pcapdir/time_%s_%02d%02d_%d.txt", date, h, n, PORT_DL)
+				filepath := fmt.Sprintf("/sdcard/experiment_log/time_%s_%02d%02d_%d.txt", date, h, n, PORT_DL)
 				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println("Error opening file:", err)
@@ -217,7 +217,7 @@ func Start_client_tcpdump(port string) *exec.Cmd {
 	h := currentTime.Hour()
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-	filepath := fmt.Sprintf("/sdcard/pcapdir/capturequic_c_%s_%02d%02d_%s.pcap", date, h, n, port)
+	filepath := fmt.Sprintf("/sdcard/experiment_log/capturequic_c_%s_%02d%02d_%s.pcap", date, h, n, port)
 	command := fmt.Sprintf("su -c tcpdump port %s -w %s", port, filepath)
 	subProcess := exec.Command("sh", "-c", command)
 	err := subProcess.Start()
@@ -252,10 +252,11 @@ func GenQuicConfig(port int) quic.Config {
 			h := currentTime.Hour()
 			n := currentTime.Minute()
 			date := fmt.Sprintf("%02d%02d%02d", y, m, d)
-			filename := fmt.Sprintf("/sdcard/pcapdir/log_%s_%02d%02d_%d_%s.qlog", date, h, n, port, role)
+			filename := fmt.Sprintf("/sdcard/experiment_log/log_%s_%02d%02d_%d_%s.qlog", date, h, n, port, role)
 			f, err := os.Create(filename)
 			if err != nil {
-				fmt.Println("cannot generate qlog file")
+				fmt.Println(err)
+				fmt.Println("Cannot generate qlog file.")
 			}
 			// handle the error
 			return qlog.NewConnectionTracer(f, p, connID)
