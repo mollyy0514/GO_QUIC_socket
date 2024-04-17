@@ -89,12 +89,14 @@ func main() {
 	
 	subp1 := Start_client_tcpdump(portsList[0])
 	subp2 := Start_client_tcpdump(portsList[1])
-	go Close_client_tcpdump(subp1)
+	done1 := make(chan bool)
+	done2 := make(chan bool)
+	go Close_client_tcpdump(subp1, done1)
 	fmt.Println("Tcpdump started. Press Ctrl+C to terminate.")
 	if err := subp1.Wait(); err != nil {
 		fmt.Printf("Error waiting for tcpdump1: %v\n", err)
 	}
-	go Close_client_tcpdump(subp2)
+	go Close_client_tcpdump(subp2, done2)
 	fmt.Println("Tcpdump started. Press Ctrl+C to terminate.")
 	if err := subp2.Wait(); err != nil {
 		fmt.Printf("Error waiting for tcpdump2: %v\n", err)
@@ -132,6 +134,7 @@ func main() {
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
 				// Close_client_tcpdump(subp1)
+				<-done1
 				/* ---------- TCPDUMP ---------- */
 			} else {	// DOWNLINK
 				// set generate configs
@@ -192,6 +195,7 @@ func main() {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
 						// Close_client_tcpdump(subp2)
+						<-done2
 						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {
@@ -273,7 +277,7 @@ func GenQuicConfig(port int) quic.Config {
 	}
 }
 
-func Close_client_tcpdump(cmd *exec.Cmd) {
+func Close_client_tcpdump(cmd *exec.Cmd, done chan<- bool) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -281,6 +285,8 @@ func Close_client_tcpdump(cmd *exec.Cmd) {
 	if err := cmd.Process.Kill(); err != nil {
 		fmt.Printf("Error terminating tcpdump: %v\n", err)
 	}
+
+	done <- true
 }
 
 func Client_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
