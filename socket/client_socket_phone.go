@@ -14,14 +14,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"syscall"
-
+	// "syscall"
 	// "os/signal"
 	"strconv"
 	"strings"
 	"sync"
-
-	// "syscall"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -219,7 +216,7 @@ func Start_client_tcpdump(port string) *exec.Cmd {
 	n := currentTime.Minute()
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
 	filepath := fmt.Sprintf("/sdcard/experiment_log/capturequic_c_%s_%02d%02d_%s.pcap", date, h, n, port)
-	command := fmt.Sprintf("su -c tcpdump port %s -w %s", port, filepath)
+	command := fmt.Sprintf("tcpdump port %s -w %s", port, filepath)
 	subProcess := exec.Command("sh", "-c", command)
 	err := subProcess.Start()
 	fmt.Printf("file created! \n")
@@ -271,7 +268,7 @@ func Close_client_tcpdump(cmd *exec.Cmd) {
 	// <-quit
 	// fmt.Println(cmd)
 	fmt.Println("Terminating tcpdump...")
-	if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
+	if err := cmd.Process.Kill(); err != nil {
 		fmt.Printf("Error terminating tcpdump: %v\n", err)
 	}
 }
