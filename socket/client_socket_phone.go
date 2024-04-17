@@ -14,11 +14,11 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
+	// "os/signal"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
+	// "syscall"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -89,7 +89,10 @@ func main() {
 
 	subp1 := Start_client_tcpdump(portsList[0])
 	subp2 := Start_client_tcpdump(portsList[1])
-
+	done1 := make(chan bool)
+	done2 := make(chan bool)
+	go Close_client_tcpdump(subp1, done1)
+	go Close_client_tcpdump(subp2, done2)
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
 
@@ -122,7 +125,7 @@ func main() {
 				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
-				Close_client_tcpdump(subp1)
+				Close_client_tcpdump(subp1, done1)
 				// <-done1
 				/* ---------- TCPDUMP ---------- */
 			} else { // DOWNLINK
@@ -183,7 +186,7 @@ func main() {
 					if ts == -115 {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
-						go Close_client_tcpdump(subp2)
+						go Close_client_tcpdump(subp2, done2)
 						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {
@@ -265,11 +268,18 @@ func GenQuicConfig(port int) quic.Config {
 	}
 }
 
-func Close_client_tcpdump(cmd *exec.Cmd) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	fmt.Println(cmd)
+func Close_client_tcpdump(cmd *exec.Cmd, done chan<- bool) {
+	// quit := make(chan os.Signal, 1)
+	// signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	// <-quit
+	// fmt.Println(cmd)
+	fmt.Println("Terminating tcpdump...")
+	if err := cmd.Process.Kill(); err != nil {
+		fmt.Printf("Error terminating tcpdump: %v\n", err)
+	}
+
+	// Notify that termination is complete
+	done <- true
 }
 
 func Client_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
