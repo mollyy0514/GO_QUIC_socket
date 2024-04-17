@@ -75,9 +75,8 @@ for device, info in zip(devices, devices_info):
         device.shell("su -c 'chmod +x /bin/python3'")
         # GO environment setting
         # git pull the latest version and go build
-        print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git pull'"))
-        device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
-        # TODO: print output in command
+        print(info[2], device.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && /data/git restore . && /data/git pull'"))
+
 
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
@@ -89,12 +88,12 @@ for device, info in zip(devices, devices_info):
         # TODO: GO environment setting
     
 
-for info in devices_info:
-    print(info[0], info[2], "\n")
-    portString = f"{device_to_port[info[2]][0]},{device_to_port[info[2]][1]}"
-    su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString} {args.time} {args.bitrate} {args.length}'
-    adb_cmd = f"su -c '{su_cmd}'"
-    p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
-    # procs.append(p)
+# for info in devices_info:
+#     print(info[0], info[2], "\n")
+#     portString = f"{device_to_port[info[2]][0]},{device_to_port[info[2]][1]}"
+#     su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {info[2]} {portString} {args.time} {args.bitrate} {args.length}'
+#     adb_cmd = f"su -c '{su_cmd}'"
+#     p = subprocess.Popen([f'adb -s {info[0]} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
+#     # procs.append(p)
 
 print('---End Of File---')
