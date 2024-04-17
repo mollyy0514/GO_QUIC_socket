@@ -256,7 +256,7 @@ func GenQuicConfig(port int) quic.Config {
 			f, err := os.Create(filename)
 			if err != nil {
 				fmt.Println(err)
-				fmt.Println("cannot generate qlog file")
+				fmt.Println("Cannot generate qlog file.")
 			}
 			// handle the error
 			return qlog.NewConnectionTracer(f, p, connID)
