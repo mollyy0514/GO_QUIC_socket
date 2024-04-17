@@ -13,11 +13,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"sync"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -54,8 +54,8 @@ func main() {
 	duration := *_duration
 	// ports := *_ports
 	portsList := strings.Split(*_ports, ",")
-	
-	if (len(portsList) == 2) {
+
+	if len(portsList) == 2 {
 		PORT_UL, _ = strconv.Atoi(portsList[0])
 		PORT_DL, _ = strconv.Atoi(portsList[1])
 	} else {
@@ -66,7 +66,7 @@ func main() {
 
 	PACKET_LEN = *_length
 	bitrate_string := *_bitrate
-	
+
 	num, unit := bitrate_string[:len(bitrate_string)-1], bitrate_string[len(bitrate_string)-1:]
 	if unit == "k" {
 		numVal, _ := strconv.ParseFloat(num, 64)
@@ -86,21 +86,10 @@ func main() {
 	}
 
 	/* ---------- TCPDUMP ---------- */
-	
+
 	subp1 := Start_client_tcpdump(portsList[0])
 	subp2 := Start_client_tcpdump(portsList[1])
-	done1 := make(chan bool)
-	done2 := make(chan bool)
-	go Close_client_tcpdump(subp1, done1)
-	fmt.Println("Tcpdump started. Press Ctrl+C to terminate.")
-	if err := subp1.Wait(); err != nil {
-		fmt.Printf("Error waiting for tcpdump1: %v\n", err)
-	}
-	go Close_client_tcpdump(subp2, done2)
-	fmt.Println("Tcpdump started. Press Ctrl+C to terminate.")
-	if err := subp2.Wait(); err != nil {
-		fmt.Printf("Error waiting for tcpdump2: %v\n", err)
-	}
+
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
 
@@ -108,7 +97,7 @@ func main() {
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
-			if i == 0 {		// UPLINK
+			if i == 0 { // UPLINK
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_UL)
@@ -133,10 +122,10 @@ func main() {
 				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
-				// Close_client_tcpdump(subp1)
-				<-done1
+				Close_client_tcpdump(subp1)
+				// <-done1
 				/* ---------- TCPDUMP ---------- */
-			} else {	// DOWNLINK
+			} else { // DOWNLINK
 				// set generate configs
 				tlsConfig := GenTlsConfig()
 				quicConfig := GenQuicConfig(PORT_DL)
@@ -191,18 +180,17 @@ func main() {
 					buf := make([]byte, PACKET_LEN)
 					ts, err := Client_receive(stream_dl, buf)
 					seq++
-					if (ts == -115) {
+					if ts == -115 {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
-						// Close_client_tcpdump(subp2)
-						<-done2
+						go Close_client_tcpdump(subp2)
 						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {
 						return
 					}
 					// fmt.Printf("client received: %f\n", ts)
-					if time.Since(currentTime) > time.Second * time.Duration(time_slot) {
+					if time.Since(currentTime) > time.Second*time.Duration(time_slot) {
 						fmt.Printf("%d [%d-%d] receive %d\n", PORT_DL, time_slot-1, time_slot, seq-prev_receive)
 						time_slot += 1
 						prev_receive = seq
@@ -215,7 +203,7 @@ func main() {
 						return
 					}
 				}
-				
+
 			}
 		}(i)
 	}
@@ -277,16 +265,11 @@ func GenQuicConfig(port int) quic.Config {
 	}
 }
 
-func Close_client_tcpdump(cmd *exec.Cmd, done chan<- bool) {
+func Close_client_tcpdump(cmd *exec.Cmd) {
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(quit, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	fmt.Println("Received signal. Terminating tcpdump...")
-	if err := cmd.Process.Kill(); err != nil {
-		fmt.Printf("Error terminating tcpdump: %v\n", err)
-	}
-
-	done <- true
+	fmt.Println(cmd)
 }
 
 func Client_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
@@ -328,7 +311,7 @@ func Client_send(stream quic.Stream, duration int) {
 	euler := 271828
 	pi := 31415926
 	next_transmission_time := float64(start_time.UnixNano()) / 1e6
-	for time.Since(start_time) <= time.Second * time.Duration(duration) {
+	for time.Since(start_time) <= time.Second*time.Duration(duration) {
 		for float64(time.Now().UnixNano())/1e6 < next_transmission_time {
 			// t = time.Now().UnixNano()
 		}
@@ -341,11 +324,11 @@ func Client_send(stream quic.Stream, duration int) {
 		// var message []byte
 		message := Client_create_packet(uint32(euler), uint32(pi), datetimedec, microsec, uint32(seq))
 		SendStartPacket(stream, message)
-		
-		if time.Since(start_time) > time.Second * time.Duration(time_slot) {
+
+		if time.Since(start_time) > time.Second*time.Duration(time_slot) {
 			fmt.Printf("%d [%d-%d] transmit %d\n", PORT_UL, time_slot-1, time_slot, seq-prev_transmit)
-            time_slot += 1
-            prev_transmit = seq
+			time_slot += 1
+			prev_transmit = seq
 		}
 		seq++
 	}
@@ -356,7 +339,7 @@ func Client_receive(stream quic.Stream, buf []byte) (float64, error) {
 	tsSeconds := binary.BigEndian.Uint32(buf[8:12])
 	tsMicroseconds := binary.BigEndian.Uint32(buf[12:16])
 	var ts float64
-	if (tsSeconds == 115 && tsMicroseconds == 115) {
+	if tsSeconds == 115 && tsMicroseconds == 115 {
 		return -115, err
 	} else {
 		ts = float64(tsSeconds) + float64(tsMicroseconds)/1e9
