@@ -15,12 +15,10 @@ import (
 	"os"
 	"strconv"
 	"sync"
-
-	// "os"
 	"os/exec"
-	// "os/signal"
+	"os/signal"
 	"strings"
-	// "syscall"
+	"syscall"
 	"time"
 
 	"github.com/quic-go/quic-go"
@@ -265,9 +263,9 @@ func GenQuicConfig(port int) quic.Config {
 }
 
 func Close_client_tcpdump(cmd *exec.Cmd) {
-	// quit := make(chan os.Signal, 1)
-	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// <-quit
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 	fmt.Print(cmd)
 }
 

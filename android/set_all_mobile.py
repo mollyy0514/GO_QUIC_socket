@@ -69,7 +69,7 @@ for device, info in zip(devices, devices_info):
     if info[2][:2] == "sm":
         device.shell("su -c 'mount -o remount,rw /system/bin'")
         for tool in tools:
-            device.shell("su -c 'cp /sdcard/wmnl-handoff-research/experimental-tools-beta/android/sm-script/termux-tools/{} /bin'".format(tool))
+            device.shell("su -c 'cp /sdcard/wmnl-handoff-research/experimental-tools/android/sm-script/termux-tools/{} /bin'".format(tool))
             device.shell("su -c 'chmod +x /bin/{}'".format(tool))
         device.shell("su -c 'cp /data/python3 /bin'")
         device.shell("su -c 'chmod +x /bin/python3'")
@@ -81,7 +81,7 @@ for device, info in zip(devices, devices_info):
     elif info[2][2] == "xm":
         # device.shell("su -c 'mount -o remount,rw /system/sbin'")
         for tool in tools:
-            device.shell("su -c 'cp /sdcard/wmnl-handoff-research/experimental-tools-beta/android/xm-script/termux-tools/{} /sbin'".format(tool))
+            device.shell("su -c 'cp /sdcard/wmnl-handoff-research/experimental-tools/android/xm-script/termux-tools/{} /sbin'".format(tool))
             device.shell("su -c 'chmod +x /sbin/{}'".format(tool))
         device.shell("su -c 'cp /data/python3 /sbin'")
         device.shell("su -c 'chmod +x /sbin/python3'")
