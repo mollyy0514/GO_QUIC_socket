@@ -217,7 +217,7 @@ func Start_client_tcpdump(port string) *exec.Cmd {
 	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
 	filepath := fmt.Sprintf("/sdcard/experiment_log/capturequic_c_%s_%02d%02d_%s.pcap", date, h, n, port)
 	command := fmt.Sprintf("tcpdump port %s -w %s", port, filepath)
-	subProcess := exec.Command("sh", "-c", command)
+	subProcess := exec.Command("su", "-c", command)
 	err := subProcess.Start()
 	fmt.Printf("file created! \n")
 	if err != nil {
