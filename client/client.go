@@ -9,9 +9,9 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
+	// "os/signal"
 	"sync"
-	"syscall"
+	// "syscall"
 
 	// "strings"
 	"time"
@@ -22,10 +22,10 @@ import (
 	"github.com/quic-go/quic-go/qlog"
 )
 
-// const SERVER = "127.0.0.1"
+const SERVER = "127.0.0.1"
 // const SERVER = "192.168.1.79" // MacBook Pro M1 local IP
 // const SERVER = "192.168.1.78" // wmnlab local IP
-const SERVER = "140.112.20.183" // 249 public IP
+// const SERVER = "140.112.20.183" // 249 public IP
 const PORT_UL = 4200
 const PORT_DL = 4201
 const SLEEPTIME = 2
@@ -37,18 +37,18 @@ var serverAddr_dl string = fmt.Sprintf("%s:%d", SERVER, PORT_DL)
 const PACKET_LEN = 250
 
 func main() {
-	// set the password for sudo
-	// Retrieve command-line arguments
-	args := os.Args
-	// Access the argument at index 1 (index 0 is the program name)
-	password := args[1]
+	// // set the password for sudo
+	// // Retrieve command-line arguments
+	// args := os.Args
+	// // Access the argument at index 1 (index 0 is the program name)
+	// password := args[1]
 
 	var wg sync.WaitGroup
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
 			if i == 0 {
-				subp1 := Start_client_tcpdump(password, PORT_UL)
+				// subp1 := Start_client_tcpdump(password, PORT_UL)
 				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
@@ -72,9 +72,9 @@ func main() {
 
 				Client_send(stream_ul)
 				session_ul.CloseWithError(0, "ul times up")
-				Close_client_tcpdump(subp1)
+				// Close_client_tcpdump(subp1)
 			} else {
-				subp2 := Start_client_tcpdump(password, PORT_DL)
+				// subp2 := Start_client_tcpdump(password, PORT_DL)
 				// time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 				// set generate configs
 				tlsConfig := GenTlsConfig()
@@ -128,7 +128,7 @@ func main() {
 					ts, err := Client_receive(stream_dl, buf)
 					if ts == -115 {
 						session_dl.CloseWithError(0, "dl times up")
-						Close_client_tcpdump(subp2)
+						// Close_client_tcpdump(subp2)
 					}
 					if err != nil {
 						return
@@ -171,9 +171,9 @@ func Start_client_tcpdump(password string, port int) *exec.Cmd {
 }
 
 func Close_client_tcpdump(cmd *exec.Cmd) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	// quit := make(chan os.Signal, 1)
+	// signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// <-quit
 }
 
 func GenTlsConfig() *tls.Config {
@@ -223,30 +223,11 @@ func Create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32,
 	binary.BigEndian.PutUint32(message[16:20], seq)
 
 	// add random additional data to 250 bytes
-	// msgLength := len(message)
-	// if msgLength < PACKET_LEN {
-	// 	randomBytes := make([]byte, PACKET_LEN-msgLength)
-	// 	rand.Read(randomBytes)
-	// 	message = append(message, randomBytes...)
-	// }
-
-	// TESTING
-	if seq == 2 {
-		fmt.Println("2 needs 500!")
-		msgLength := len(message)
-		if msgLength < 500 {
-			randomBytes := make([]byte, 500-msgLength)
-			rand.Read(randomBytes)
-			message = append(message, randomBytes...)
-		}
-		fmt.Println(len(message))
-	} else {
-		msgLength := len(message)
-		if msgLength < PACKET_LEN {
-			randomBytes := make([]byte, PACKET_LEN-msgLength)
-			rand.Read(randomBytes)
-			message = append(message, randomBytes...)
-		}
+	msgLength := len(message)
+	if msgLength < PACKET_LEN {
+		randomBytes := make([]byte, PACKET_LEN-msgLength)
+		rand.Read(randomBytes)
+		message = append(message, randomBytes...)
 	}
 
 	return message

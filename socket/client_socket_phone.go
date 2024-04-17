@@ -8,13 +8,16 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
-	// "syscall"
+
+	"syscall"
 	// "os/signal"
 	"strconv"
 	"strings"
@@ -90,14 +93,37 @@ func main() {
 	subp2 := Start_client_tcpdump(portsList[1])
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
-
+	currentTime := time.Now()
+	y := currentTime.Year()
+	m := currentTime.Month()
+	d := currentTime.Day()
+	h := currentTime.Hour()
+	n := currentTime.Minute()
+	date := fmt.Sprintf("%02d%02d%02d", y, m, d)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
 		go func(i int) { // capture packets in client side
 			if i == 0 { // UPLINK
 				// set generate configs
+				keyLogFileUl := fmt.Sprintf("/sdcard/experiment_log/tls_key_%s_%02d%02d_%02d.log", date, h, n, PORT_UL)
+				var keyLogUl io.Writer
+				if len(keyLogFileUl) > 0 {
+					f, err := os.Create(keyLogFileUl)
+					if err != nil {
+						log.Fatal(err)
+					}
+					defer f.Close()
+					keyLogUl = f
+				}
+				poolUl, err := x509.SystemCertPool()
+				if err != nil {
+					log.Fatal(err)
+				}
 				tlsConfig := GenTlsConfig()
+				tlsConfig.RootCAs = poolUl
+				tlsConfig.KeyLogWriter = keyLogUl
+
 				quicConfig := GenQuicConfig(PORT_UL)
 
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
@@ -124,7 +150,24 @@ func main() {
 				/* ---------- TCPDUMP ---------- */
 			} else { // DOWNLINK
 				// set generate configs
+				keyLogFileDl := fmt.Sprintf("/sdcard/experiment_log/tls_key_%s_%02d%02d_%02d.log", date, h, n, PORT_DL)
+				var keyLogDl io.Writer
+				if len(keyLogFileDl) > 0 {
+					f, err := os.Create(keyLogFileDl)
+					if err != nil {
+						log.Fatal(err)
+					}
+					defer f.Close()
+					keyLogDl = f
+				}
+				poolDl, err := x509.SystemCertPool()
+				if err != nil {
+					log.Fatal(err)
+				}
 				tlsConfig := GenTlsConfig()
+				tlsConfig.RootCAs = poolDl
+				tlsConfig.KeyLogWriter = keyLogDl
+
 				quicConfig := GenQuicConfig(PORT_DL)
 
 				ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s handshake timeout
@@ -143,14 +186,7 @@ func main() {
 				}
 				defer stream_dl.Close()
 
-				// Open or create a file to store the floats in JSON format
-				currentTime := time.Now()
-				y := currentTime.Year()
-				m := currentTime.Month()
-				d := currentTime.Day()
-				h := currentTime.Hour()
-				n := currentTime.Minute()
-				date := fmt.Sprintf("%02d%02d%02d", y, m, d)
+				// Open or create a file to store the floats in TXT format
 				filepath := fmt.Sprintf("/sdcard/experiment_log/time_%s_%02d%02d_%d.txt", date, h, n, PORT_DL)
 				timeFile, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
@@ -219,6 +255,7 @@ func Start_client_tcpdump(port string) *exec.Cmd {
 	command := fmt.Sprintf("su -c tcpdump port %s -w %s", port, filepath)
 	subProcess := exec.Command("sh", "-c", command)
 	err := subProcess.Start()
+	subProcess.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	fmt.Printf("file created! \n")
 	if err != nil {
 		log.Fatal(err)
@@ -268,9 +305,17 @@ func Close_client_tcpdump(cmd *exec.Cmd) {
 	// <-quit
 	// fmt.Println(cmd)
 	fmt.Println("Terminating tcpdump...")
-	if err := cmd.Process.Kill(); err != nil {
-		fmt.Printf("Error terminating tcpdump: %v\n", err)
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err != nil {
+		fmt.Printf("Error getting tcpdump pid: %v\n", err)
 	}
+	if err := syscall.Kill(-pgid, 15); err != nil {
+        fmt.Printf("Error terminating tcpdump: %v\n", err)
+    }
+
+	// if err := cmd.Process.Kill(); err != nil {
+	// 	fmt.Printf("Error terminating tcpdump: %v\n", err)
+	// }
 }
 
 func Client_create_packet(euler uint32, pi uint32, datetimedec uint32, microsec uint32, seq uint32) []byte {
