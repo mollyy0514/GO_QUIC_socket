@@ -14,10 +14,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"syscall"
+
 	// "os/signal"
 	"strconv"
 	"strings"
 	"sync"
+
 	// "syscall"
 	"time"
 
@@ -86,7 +89,6 @@ func main() {
 	}
 
 	/* ---------- TCPDUMP ---------- */
-
 	subp1 := Start_client_tcpdump(portsList[0])
 	subp2 := Start_client_tcpdump(portsList[1])
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
@@ -122,7 +124,6 @@ func main() {
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
 				Close_client_tcpdump(subp1)
-				// <-done1
 				/* ---------- TCPDUMP ---------- */
 			} else { // DOWNLINK
 				// set generate configs
@@ -270,7 +271,7 @@ func Close_client_tcpdump(cmd *exec.Cmd) {
 	// <-quit
 	// fmt.Println(cmd)
 	fmt.Println("Terminating tcpdump...")
-	if err := cmd.Process.Kill(); err != nil {
+	if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil {
 		fmt.Printf("Error terminating tcpdump: %v\n", err)
 	}
 }
