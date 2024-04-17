@@ -91,8 +91,8 @@ func main() {
 	subp2 := Start_client_tcpdump(portsList[1])
 	done1 := make(chan bool)
 	done2 := make(chan bool)
-	go Close_client_tcpdump(subp1, done1)
-	go Close_client_tcpdump(subp2, done2)
+	// go Close_client_tcpdump(subp1, done1)
+	// go Close_client_tcpdump(subp2, done2)
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
 
