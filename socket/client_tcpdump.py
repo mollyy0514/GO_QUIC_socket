@@ -19,7 +19,7 @@ ports = args.ports.split(',')
 now = dt.datetime.today()
 n = [str(x) for x in [now.year, now.month, now.day, now.minute, now.second]]
 n = [x.zfill(2) for x in n]
-n = '-'.join(n[:3]) + '_' + '-'.join(n[3:])
+n = ''.join(n[:3]) + '_' + ''.join(n[3:])
 pcap_path = "/sdcard/experiment_log/"
 if not os.path.isdir(pcap_path):
     os.system(f'mkdir {pcap_path}')
