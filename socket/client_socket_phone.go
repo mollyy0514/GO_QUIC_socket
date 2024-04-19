@@ -16,7 +16,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"os/signal"
 
 	"syscall"
 	// "os/signal"
@@ -44,13 +43,6 @@ var PORT_DL int
 
 // func Socket(_host *string, _devices *string, _ports *string, _bitrate *string, _length *string, _duration *int) {
 func main() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		time.Sleep(3 * time.Second)
-		os.Exit(1)
-	}()
 	// Define command-line flags
 	_host := flag.String("H", "140.112.20.183", "server ip address")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")

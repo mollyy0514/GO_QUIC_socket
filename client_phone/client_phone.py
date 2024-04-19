@@ -74,6 +74,7 @@ length = args.length
 total_time = args.time
 
 #=================start sockets=======================
+procs = []
 for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials):
     print(device, serial, "\n")
     portString = f"{port[0]},{port[1]}"
@@ -88,8 +89,27 @@ for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials
     p_tcpdump = subprocess.Popen([f'adb -s {serial} shell "{adb_tcpdump_cmd}"'], shell=True, preexec_fn=os.setpgrp)
     p_socket = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
 
-    # procs.append(p)
+    procs.append(p_tcpdump)
 
-time.sleep(1)
+def is_alive(p):
+    if p.poll() is None:
+        return True
+    else:
+        return False
+
+def all_process_end(procs):
+    for p in procs:
+        if is_alive(p):
+            return False
+    return True
+
+while not all_process_end(procs):
+    try:
+        time.sleep(3)
+    except KeyboardInterrupt:
+        su_cmd = 'pkill -2 python3'
+        adb_cmd = f"su -c '{su_cmd}'"
+        for serial in serials:
+            subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True)
 
 print("---End Of File---")
