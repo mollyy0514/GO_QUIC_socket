@@ -77,10 +77,16 @@ total_time = args.time
 for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials):
     print(device, serial, "\n")
     portString = f"{port[0]},{port[1]}"
+    client_tcpdump_cmd = f"cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_tcpdump.py -d {device} -p {portString}"
+    adb_tcpdump_cmd = f"su -c '{client_tcpdump_cmd}'"
+    
     device_adb.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
     su_cmd = f'cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_socket.sh {device} {portString} {total_time} {bitrate} {length}'
     adb_cmd = f"su -c '{su_cmd}'"
-    p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
+
+    p_tcpdump = subprocess.Popen([f'adb -s {serial} shell "{adb_tcpdump_cmd}"'], shell=True, preexec_fn=os.setpgrp)
+    p_socket = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
+
     # procs.append(p)
 
 time.sleep(1)
