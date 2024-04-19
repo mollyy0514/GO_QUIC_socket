@@ -7,7 +7,7 @@ import datetime as dt
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--device", type=str, help="device", default="sm00")
-parser.add_argument("-p", "-ports", type=str, help="ports", default="5200,5201")
+parser.add_argument("-p", "--ports", type=str, help="ports", default="5200,5201")
 args = parser.parse_args()
 
 dev = args.device
