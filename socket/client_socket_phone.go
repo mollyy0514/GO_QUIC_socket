@@ -89,8 +89,8 @@ func main() {
 	}
 
 	/* ---------- TCPDUMP ---------- */
-	subp1 := Start_client_tcpdump(portsList[0])
-	subp2 := Start_client_tcpdump(portsList[1])
+	// subp1 := Start_client_tcpdump(portsList[0])
+	// subp2 := Start_client_tcpdump(portsList[1])
 	time.Sleep(1 * time.Second) // sleep 1 sec to ensure the whle handshake process is captured
 	/* ---------- TCPDUMP ---------- */
 	currentTime := time.Now()
@@ -146,7 +146,7 @@ func main() {
 				time.Sleep(1 * time.Second)
 				session_ul.CloseWithError(0, "ul times up")
 				/* ---------- TCPDUMP ---------- */
-				Close_client_tcpdump(subp1)
+				// Close_client_tcpdump(subp1)
 				/* ---------- TCPDUMP ---------- */
 			} else { // DOWNLINK
 				// set generate configs
@@ -216,7 +216,7 @@ func main() {
 					if ts == -115 {
 						session_dl.CloseWithError(0, "dl times up")
 						/* ---------- TCPDUMP ---------- */
-						Close_client_tcpdump(subp2)
+						// Close_client_tcpdump(subp2)
 						/* ---------- TCPDUMP ---------- */
 					}
 					if err != nil {

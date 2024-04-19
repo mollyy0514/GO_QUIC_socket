@@ -41,7 +41,7 @@ if os.path.isdir(sys.argv[1]):
 elif sys.argv[1].endswith(".pcap"):
 
     # fname = "./data/"+sys.argv[1]
-    fname = "/Volumes/mollyT7/test/" + sys.argv[1]
+    fname = sys.argv[1]
     pcap_to_csv(fname, os.path.join(fname[:fname.find(".pcap")]+"_pcap.csv"))
 
 else:
