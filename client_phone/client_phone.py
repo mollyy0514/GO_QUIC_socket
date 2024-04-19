@@ -77,7 +77,7 @@ total_time = args.time
 for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials):
     print(device, serial, "\n")
     portString = f"{port[0]},{port[1]}"
-    client_tcpdump_cmd = f"cd /data/data/com.termux/files/home/GO_QUIC_socket && ./client_phone/client_tcpdump.py -d {device} -p {portString}"
+    client_tcpdump_cmd = f"cd /data/data/com.termux/files/home/GO_QUIC_socket && ./socket/client_tcpdump.py -d {device} -p {portString}"
     adb_tcpdump_cmd = f"su -c '{client_tcpdump_cmd}'"
     
     device_adb.shell("su -c 'cd /data/data/com.termux/files/home/GO_QUIC_socket && chmod +x ./client_phone/client_socket.sh'")
