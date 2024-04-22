@@ -25,10 +25,10 @@ if not os.path.isdir(pcap_path):
     os.system(f'mkdir {pcap_path}')
 
 pcapUl = os.path.join(pcap_path, f"client_pcap_UL_{dev}_{ports[0]}_{n}.pcap")
-tcpprocUl = subprocess.Popen([f"tcpdump -i any -w {pcapUl}"], shell=True, preexec_fn=os.setpgrp)
+tcpprocUl = subprocess.Popen([f"tcpdump -i any port {ports[0]} -w {pcapUl}"], shell=True, preexec_fn=os.setpgrp)
 
 pcapDl = os.path.join(pcap_path, f"client_pcap_DL_{dev}_{ports[1]}_{n}.pcap")
-tcpprocDl = subprocess.Popen([f"tcpdump -i any ip -w {pcapDl}"], shell=True, preexec_fn=os.setpgrp)
+tcpprocDl = subprocess.Popen([f"tcpdump -i any port {ports[1]} -w {pcapDl}"], shell=True, preexec_fn=os.setpgrp)
 
 stop_threads = False
 while not stop_threads:
