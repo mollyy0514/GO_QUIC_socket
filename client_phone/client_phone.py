@@ -87,7 +87,7 @@ for device_adb, device, port, serial in zip(devices_adb, devices, ports, serials
     adb_cmd = f"su -c '{su_cmd}'"
 
     p_tcpdump = subprocess.Popen([f'adb -s {serial} shell "{adb_tcpdump_cmd}"'], shell=True, preexec_fn=os.setpgrp)
-    p_socket = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
+    # p_socket = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
 
     procs.append(p_tcpdump)
 
