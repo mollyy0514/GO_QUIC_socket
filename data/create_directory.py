@@ -2,11 +2,11 @@ import os
 import shutil
 
 ##### VARIABLES SETTING #####
-root_dir = "/Volumes/mollyT7/MOXA/"
-dates = ["2024-04-11"]
-exp_names = ["QUIC-inf"]
-device_names = ["sm00", "sm01"]
-num_experiments = 6
+root_dir = "/Volumes/mollyT7/"
+dates = ["2024-04-24"]
+exp_names = ["QUIC-1M"]
+device_names = ["sm01"]
+num_experiments = 2
 
 device_to_port = {"sm00": [5200, 5201], "sm01": [5202, 5203], "sm02": [5204, 5205]}
 num_devices = len(device_names)
@@ -50,7 +50,7 @@ for date in dates:
                     if file.startswith("diag_log_" + device):
                         src_file = os.path.join(mi2log_dir, file)
                         file_list.remove(file)
-                        shutil.move(src_file, raw_dir)
+                        shutil.copy(src_file, raw_dir)
                         break
 ##### MOVING xml of MOBILEINSIGHT FILES #####
 
@@ -97,7 +97,7 @@ for date in dates:
 ##### MOVING UDP SERVER pcap FILES #####
 # for date in dates:
 #     date_dir = os.path.join(root_dir, date)
-#     server_dir = os.path.join(root_dir, date, "server")
+#     server_dir = os.path.join(root_dir, date, "server_pcap")
 #     file_list = sorted(os.listdir(server_dir))
 #     for exp_name in udp_exp_names:
 #         for i in range(1, num_experiments + 1):
@@ -117,7 +117,7 @@ for date in dates:
 # for date in dates:
 #     date_dir = os.path.join(root_dir, date)
 #     for client in device_names:
-#         client_dir = os.path.join(root_dir, date, client)
+#         client_dir = os.path.join(root_dir, date, client, date, "client_pcap")
 #         file_list = sorted(os.listdir(client_dir))
 #         for exp_name in udp_exp_names:
 #             for i in range(1, num_experiments + 1):
