@@ -9,8 +9,8 @@ from datetime import datetime, timedelta
 from pytictoc import TicToc
 
 ##### ---------- USER SETTINGS ---------- #####
-database = "/Volumes/mollyT7/MOXA/"
-# database = "/home/wmnlab/Documents/r12921105"
+# database = "/Volumes/mollyT7/MOXA/"
+database = "/home/wmnlab/Documents/r12921105"
 dates = ["2024-03-21"]
 exp_names = {
     "QUIC-inf": (6, ["#{:02d}".format(i + 1) for i in range(6)]),
@@ -134,14 +134,31 @@ def update_pk_sent_rows(row):
 
     for ack_range in acked_ranges:
         start_packet, end_packet = ack_range[0], ack_range[-1]
-        existing_packets = set(pk_sent_rows['packet_number'])
-        packet_numbers_to_update = set(range(start_packet, end_packet + 1)).intersection(existing_packets)
+        start_index = None
+        tmp = start_packet
+        while start_index is None:
+            try:
+                start_index = packet_number_index_map[tmp]
+            except KeyError:
+                if (tmp + 1) <= end_packet:
+                    tmp += 1
+        end_index = None
+        tmp = end_packet
+        while end_index is None:
+            try:
+                end_index = packet_number_index_map[tmp]
+            except KeyError:
+                if (tmp - 1) >= start_packet:
+                    tmp -= 1
 
-        mask = pk_sent_rows['packet_number'].isin(packet_numbers_to_update)
-        pk_sent_rows.loc[mask, 'smoothed_rtt'] = pk_sent_rows.loc[mask, 'smoothed_rtt'].fillna(smoothed_rtt)
-        pk_sent_rows.loc[mask, 'latest_rtt'] = pk_sent_rows.loc[mask, 'latest_rtt'].fillna(latest_rtt)
-        pk_sent_rows.loc[mask, 'congestion_window'] = pk_sent_rows.loc[mask, 'congestion_window'].fillna(congestion_window)
-        pk_sent_rows.loc[mask, 'rtt_variance'] = pk_sent_rows.loc[mask, 'rtt_variance'].fillna(rtt_variance)
+        if start_index is None | end_index is None:
+            continue
+
+        # Update the corresponding rows in pk_sent_rows
+        pk_sent_rows.loc[start_index:end_index, 'smoothed_rtt'] = pk_sent_rows.loc[start_index:end_index, 'smoothed_rtt'].fillna(smoothed_rtt)
+        pk_sent_rows.loc[start_index:end_index, 'latest_rtt'] = pk_sent_rows.loc[start_index:end_index, 'latest_rtt'].fillna(latest_rtt)
+        pk_sent_rows.loc[start_index:end_index, 'congestion_window'] = pk_sent_rows.loc[start_index:end_index, 'congestion_window'].fillna(congestion_window)
+        pk_sent_rows.loc[start_index:end_index, 'rtt_variance'] = pk_sent_rows.loc[start_index:end_index, 'rtt_variance'].fillna(rtt_variance)
 
 def find_ul_file(database, date, exp, device):
     ul_files = []
@@ -203,6 +220,98 @@ def find_dl_loss_file(database, date, exp, device):
                         dl_loss_files.append(os.path.join(root, file))
                         break  # Exit the inner loop once the port is found
     return dl_loss_files
+
+def find_ul_sender_file(database, date, exp, device):
+    ul_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'raw')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "client.csv" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[0]) in numbers:
+                        ul_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return ul_files
+def find_dl_sender_file(database, date, exp, device):
+    dl_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'raw')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "server.csv" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[1]) in numbers:
+                        dl_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return dl_files
+def find_ul_rcv_file(database, date, exp, device):
+    ul_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'data')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "processed_rcv" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[0]) in numbers:
+                        ul_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return ul_files
+def find_dl_rcv_file(database, date, exp, device):
+    dl_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'data')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "processed_rcv" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[1]) in numbers:
+                        dl_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return dl_files
+def find_ul_loss_file(database, date, exp, device):
+    ul_loss_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'middle')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "lost_pk" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[0]) in numbers:
+                        ul_loss_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return ul_loss_files
+def find_dl_loss_file(database, date, exp, device):
+    dl_loss_files = []
+    exp_rounds, exp_list = exp_names[exp]
+    ports = device_to_port.get(device, [])
+    for exp_round in exp_list:
+        folder_path = os.path.join(database, date, exp, device, exp_round, 'middle')
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if "lost_pk" in file:
+                    # Extract the numbers from the file name
+                    numbers = file.split("_")[3]
+                    if str(ports[1]) in numbers:
+                        dl_loss_files.append(os.path.join(root, file))
+                        break  # Exit the inner loop once the port is found
+    return dl_loss_files
+
 # Classify lost packet
 def get_loss_data(lost_df, received_df):
     # Check if each row in ul_lost_df['packet_number'] is present in ul_received_df['packet_number']
@@ -223,8 +332,10 @@ def get_loss_data(lost_df, received_df):
 
     return exec_lat_df, exec_reorder_df, exec_time_df, real_lost_df, lost_reorder_df, lost_time_df
 # Calculate lost packet statistics
-def calculate_statistics(lost_reorder_df, lost_time_df, real_lost_df, exec_reorder_df, exec_time_df, exec_lat_df, lost_df, df):
-    statistics_data = {
+def calculate_statistics(lost_reorder_df, lost_time_df, real_lost_df, exec_reorder_df, exec_time_df, exec_lat_df, lost_df, data_df, sent_df):
+    statistics_data = [{
+        'total_packets': len(sent_df),
+        'total_data_packets': len(data_df),
         'original_pkl': len(lost_df),
         'reordering_threshold': len(lost_reorder_df),
         'time_threshold': len(lost_time_df),
@@ -235,12 +346,12 @@ def calculate_statistics(lost_reorder_df, lost_time_df, real_lost_df, exec_reord
         'reordering_pkl_rate(%)': 0 if len(real_lost_df) == 0 else len(lost_reorder_df)*100 / len(real_lost_df),
         'time_pkl_rate(%)': 0 if len(real_lost_df) == 0 else len(lost_time_df)*100 / len(real_lost_df),
         'real_pkl_rate(%)': 0 if len(lost_df) == 0 else len(real_lost_df)*100 / len(lost_df),
-        'original_packet_loss_rate(%)': len(lost_df)*100 / (df.iloc[-1]['offset'] / 250),
-        'adjusted_packet_loss_rate(%)': len(real_lost_df)*100 / (df.iloc[-1]['offset'] / 250)
-    }
+        'original_packet_loss_rate(%)': len(lost_df)*100 / len(sent_df),
+        'adjusted_packet_loss_rate(%)': len(real_lost_df)*100 / len(sent_df)
+    }]
 
     # Convert the dictionary to a dataframe
-    statistics_df = pd.DataFrame(statistics_data, index=[0])
+    statistics_df = pd.DataFrame.from_dict(statistics_data)
     return statistics_df
 
 file_pairs = []
@@ -501,7 +612,9 @@ for date in dates:
                 pk_sent_rows['latest_rtt'] = np.nan
                 pk_sent_rows['rtt_variance'] = np.nan
                 pk_sent_rows['congestion_window'] = np.nan
-
+                
+                # Create a dictionary to store the mapping between packet numbers and indices
+                packet_number_index_map = {packet_number: index for index, packet_number in enumerate(pk_sent_rows['packet_number'])}
                 # Apply the custom update function to each row in rcv_ack_rows
                 rcv_ack_rows.apply(update_pk_sent_rows, axis=1)
                 t.toc("parsing RTT info took")
@@ -572,53 +685,70 @@ for date in dates:
 
 
 ##### ---------- CALCULATE LOST PACKET STATISTICS ---------- #####
-all_ul_files = []
+all_ul_sender_files = []
+all_ul_rcv_files = []
 all_ul_pkl_files = []
 for date in dates:
     for exp in exp_names:
         for device in device_names:
-            ul_pk_files = find_ul_file(database, date, exp, device)
+            ul_sender_files = find_ul_sender_file(database, date, exp, device)
+            ul_rcv_files = find_ul_rcv_file(database, date, exp, device)
             ul_pk_loss_files = find_ul_loss_file(database, date, exp, device)
-            all_ul_files.extend(ul_pk_files)
+            all_ul_sender_files.extend(ul_sender_files)
+            all_ul_rcv_files.extend(ul_rcv_files)
             all_ul_pkl_files.extend(ul_pk_loss_files)
 
-for i in range(len(all_ul_files)):
-    ul_rcv_df = pd.read_csv(all_ul_files[i], sep='@')
+for i in range(len(all_ul_rcv_files)):
+    ul_sender_df = pd.read_csv(all_ul_sender_files[i], sep=',')
+    # ul_sent_df is raw file, ul_rcv_df is processed file
+    ul_sent_df = ul_sender_df[(ul_sender_df['name'] == 'transport:packet_sent')]
+    ul_data_df = ul_sent_df[ul_sent_df['data'].str.contains("'frame_type': 'stream'")]
+    ul_rcv_df = pd.read_csv(all_ul_rcv_files[i], sep='@')
     ul_loss_df = pd.read_csv(all_ul_pkl_files[i])
     ul_exec_lat_df, ul_exec_reorder_df, ul_exec_time_df, ul_real_lost_df, ul_lost_reorder_df, ul_lost_time_df = get_loss_data(ul_loss_df, ul_rcv_df)
-    ul_statistics = calculate_statistics(ul_lost_reorder_df, ul_lost_time_df, ul_real_lost_df, ul_exec_reorder_df, ul_exec_time_df, ul_exec_lat_df, ul_loss_df, ul_rcv_df)
+    ul_statistics = calculate_statistics(ul_lost_reorder_df, ul_lost_time_df, ul_real_lost_df, ul_exec_reorder_df, ul_exec_time_df, ul_exec_lat_df, ul_loss_df, ul_data_df, ul_sent_df)
 
-    directory = os.path.dirname(all_ul_files[i])
+    directory = os.path.dirname(all_ul_rcv_files[i])
     ul_loss_df['lost'] = False
     ul_loss_df['excl'] = False
     # Set 'lost' column to True for rows in ul_real_lost_df
     ul_loss_df.loc[ul_loss_df['packet_number'].isin(ul_real_lost_df['packet_number']), 'lost'] = True
     # Set 'excl' column to True for rows in ul_exec_lat_df
     ul_loss_df.loc[ul_loss_df['packet_number'].isin(ul_exec_lat_df['packet_number']), 'excl'] = True
-    ul_loss_df.to_csv(f"{directory}/ul_real_lost_pk.csv", index=False)
+    parts = directory.split("/")
+    parts[-1] = "data"
+    data_directory = "/".join(parts)
+    ul_loss_df.to_csv(f"{data_directory}/ul_real_lost_pk.csv", index=False)
     # modify to the statistics directory
     parts = directory.split("/")
     parts[-1] = "statistics"
     statistics_directory = "/".join(parts)
     ul_statistics.to_csv(f"{statistics_directory}/ul_statistics.csv", index=False)
 
-all_dl_files = []
+all_dl_sender_files = []
+all_dl_rcv_files = []
 all_dl_pkl_files = []
 for date in dates:
     for exp in exp_names:
         for device in device_names:
-            dl_pk_files = find_dl_file(database, date, exp, device)
+            dl_sender_files = find_dl_sender_file(database, date, exp, device)
+            dl_rcv_files = find_dl_rcv_file(database, date, exp, device)
             dl_pk_loss_files = find_dl_loss_file(database, date, exp, device)
-            all_dl_files.extend(dl_pk_files)
+            all_dl_sender_files.extend(dl_sender_files)
+            all_dl_rcv_files.extend(dl_rcv_files)
             all_dl_pkl_files.extend(dl_pk_loss_files)
 
-for i in range(len(all_dl_files)):
-    dl_rcv_df = pd.read_csv(all_dl_files[i], sep='@')
+for i in range(len(all_dl_rcv_files)):
+    dl_sender_df = pd.read_csv(all_dl_sender_files[i], sep=',')
+    # dl_sent_df is raw file, dl_rcv_df is processed file
+    dl_sent_df = dl_sender_df[(dl_sender_df['name'] == 'transport:packet_sent')]
+    dl_data_df = dl_sent_df[dl_sent_df['data'].str.contains("'frame_type': 'stream'")]
+    dl_rcv_df = pd.read_csv(all_dl_rcv_files[i], sep='@')
     dl_loss_df = pd.read_csv(all_dl_pkl_files[i])
     dl_exec_lat_df, dl_exec_reorder_df, dl_exec_time_df, dl_real_lost_df, dl_lost_reorder_df, dl_lost_time_df = get_loss_data(dl_loss_df, dl_rcv_df)
-    dl_statistics = calculate_statistics(dl_lost_reorder_df, dl_lost_time_df, dl_real_lost_df, dl_exec_reorder_df, dl_exec_time_df, dl_exec_lat_df, dl_loss_df, dl_rcv_df)
+    dl_statistics = calculate_statistics(dl_lost_reorder_df, dl_lost_time_df, dl_real_lost_df, dl_exec_reorder_df, dl_exec_time_df, dl_exec_lat_df, dl_loss_df, dl_data_df, dl_sent_df)
     
-    directory = os.path.dirname(all_dl_files[i])
+    directory = os.path.dirname(all_dl_rcv_files[i])
     dl_loss_df['lost'] = False
     dl_loss_df['excl'] = False
     # Set 'lost' column to True for rows in dl_real_lost_df
