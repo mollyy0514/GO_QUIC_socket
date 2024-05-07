@@ -43,8 +43,8 @@ func main() {
 	// Define command-line flags
 	_password := flag.String("p", "", "password")
 	_devices := flag.String("d", "sm00", "list of devices (space-separated)")
-	_bitrate := flag.String("b", "1M", "target bitrate in bits/sec (0 for unlimited)")
-	_length := flag.Int("l", 250, "length of buffer to read or write in bytes (packet size)")
+	_bitrate := flag.String("b", "0", "target bitrate in bits/sec (0 for unlimited)")
+	_length := flag.Int("l", 1223, "length of buffer to read or write in bytes (packet size)")
 	_duration := flag.Int("t", 300, "time in seconds to transmit for (default 1 hour = 3600 secs)")
 	flag.Parse()
 	if *_password == "" {

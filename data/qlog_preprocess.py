@@ -10,12 +10,13 @@ from pytictoc import TicToc
 
 ##### ---------- USER SETTINGS ---------- #####
 # database = "/Volumes/mollyT7/MOXA/"
-database = "/home/wmnlab/Documents/r12921105"
-dates = ["2024-03-21"]
+# database = "/home/wmnlab/Documents/r12921105"
+database = "/Users/molly/Desktop/"
+dates = ["2024-04-11"]
 exp_names = {
-    "QUIC-inf": (6, ["#{:02d}".format(i + 1) for i in range(6)]),
+    "QUIC-inf": (1, ["#{:02d}".format(i + 1) for i in range(1)]),
     }
-device_names = ["sm00", "sm01"]
+device_names = ["sm01"]
 
 device_to_port = {"sm00": [5200, 5201], 
                   "sm01": [5202, 5203],
@@ -126,6 +127,7 @@ def insert(df, idx, new_row):
 
 # Mapping RTT to every sent packet
 def update_pk_sent_rows(row):
+    # print(packet_number_index_map[0])
     acked_ranges = row['acked_ranges']
     smoothed_rtt = row['smoothed_rtt']
     latest_rtt = row['latest_rtt']
@@ -133,25 +135,32 @@ def update_pk_sent_rows(row):
     congestion_window = row['congestion_window']
 
     for ack_range in acked_ranges:
+        print(ack_range[0], ack_range[-1])
         start_packet, end_packet = ack_range[0], ack_range[-1]
-        start_index = None
+        start_index = -1
         tmp = start_packet
-        while start_index is None:
+        while start_index == -1:
             try:
                 start_index = packet_number_index_map[tmp]
+                print(start_index, packet_number_index_map[tmp])
             except KeyError:
                 if (tmp + 1) <= end_packet:
                     tmp += 1
-        end_index = None
+                else:
+                    break
+        end_index = -1
         tmp = end_packet
-        while end_index is None:
+        while end_index == -1:
             try:
                 end_index = packet_number_index_map[tmp]
+                print(end_index, packet_number_index_map[tmp])
             except KeyError:
                 if (tmp - 1) >= start_packet:
                     tmp -= 1
+                else:
+                    break
 
-        if start_index is None | end_index is None:
+        if start_index == -1 | end_index == -1:
             continue
 
         # Update the corresponding rows in pk_sent_rows
@@ -616,7 +625,9 @@ for date in dates:
                 # Create a dictionary to store the mapping between packet numbers and indices
                 packet_number_index_map = {packet_number: index for index, packet_number in enumerate(pk_sent_rows['packet_number'])}
                 # Apply the custom update function to each row in rcv_ack_rows
-                rcv_ack_rows.apply(update_pk_sent_rows, axis=1)
+                for idx, row in rcv_ack_rows.iterrows():
+                    update_pk_sent_rows(row)
+                # rcv_ack_rows.apply(update_pk_sent_rows, axis=1)
                 t.toc("parsing RTT info took")
                 ##### ---------- MAPPING ACK: "smoothed_rtt", "latest_rtt", "congestion_window", "rtt_variance" ---------- #####
 
