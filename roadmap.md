@@ -82,3 +82,20 @@
 
 **0318**:
 - Use self-signed CA to avoid tls_key file, and check whether it can be decrypted by Wireshark
+
+**0510**:
+- Modify UDP socket to adopt to packets with payload_length == 1223.
+- Modify UDP preprocessing code to adopt to packets with bitrate == inf.
+- Add a TCP socket which can adopt to mobile phone experiment.
+- add MobileInsight
+- wmn_research:
+    - main
+        - tcp
+        - udp
+        - quic
+        - MobileInsight
+    - preprocessing
+        - tcp
+        - udp
+        - quic
+        - MobileInsight

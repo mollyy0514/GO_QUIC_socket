@@ -2,11 +2,11 @@ import os
 import shutil
 
 ##### VARIABLES SETTING #####
-root_dir = "/Volumes/mollyT7/"
-dates = ["2024-04-24"]
-exp_names = ["QUIC-5M", "QUIC-10M"]
+root_dir = "/Volumes/mollyT7/MOXA/"
+dates = ["2024-05-08"]
+exp_names = ["QUIC-1M", "QUIC-5M", "QUIC-10M"]
 device_names = ["sm00", "sm01"]
-num_experiments = 2
+num_experiments = 4
 
 device_to_port = {"sm00": [5200, 5201], "sm01": [5202, 5203], "sm02": [5204, 5205]}
 num_devices = len(device_names)

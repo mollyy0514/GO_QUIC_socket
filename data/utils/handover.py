@@ -77,6 +77,8 @@ def parse_mi_ho(f):
         # In l : (second, ho_type)
         for target in targets:
             for ho in D[target]:
+                if ho.end is None:
+                    ho = ho._replace(end=ho.start)
                 l.append(((t - ho.end).total_seconds(), target, ho))
 
         if len(l) != 0:
@@ -182,7 +184,6 @@ def parse_mi_ho(f):
                         others += f' Near after RLF of trans: {ho.trans}.'
 
                     else:
-                        
                         ho_type, _ = find_in_D_first_before(['MN_HO_to_eNB', 'SN_Rel'], 2)
                         if ho_type is not None:
                             others += f' Near after {ho_type}.'
